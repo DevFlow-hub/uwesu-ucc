@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, MapPin, Clock } from "lucide-react";
 import { format } from "date-fns";
+import EventCountdown from "@/components/EventCountdown";
 
 const Events = () => {
   const { data: events, isLoading } = useQuery({
@@ -60,6 +61,7 @@ const Events = () => {
                     <CardDescription>{event.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    <EventCountdown eventDate={event.event_date} />
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>{format(new Date(event.event_date), "MMMM d, yyyy")}</span>
