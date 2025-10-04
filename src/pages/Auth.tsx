@@ -24,6 +24,14 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check if this is a password reset callback first
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    if (type === 'recovery') {
+      setIsResettingPassword(true);
+      return; // Don't redirect if resetting password
+    }
+
     // Check if user is already logged in
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -32,13 +40,6 @@ const Auth = () => {
       }
     };
     checkUser();
-
-    // Check if this is a password reset callback
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const type = hashParams.get('type');
-    if (type === 'recovery') {
-      setIsResettingPassword(true);
-    }
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
