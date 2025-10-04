@@ -115,9 +115,10 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="events" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-2xl">
+          <TabsList className="grid w-full grid-cols-4 max-w-3xl">
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
+            <TabsTrigger value="sms">SMS</TabsTrigger>
             <TabsTrigger value="info">Union Info</TabsTrigger>
           </TabsList>
 
@@ -171,6 +172,84 @@ const Admin = () => {
                 </form>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="sms">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Send Manual SMS</CardTitle>
+                  <CardDescription>Send custom SMS messages to users</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const phone = formData.get("phone") as string;
+                    const message = formData.get("message") as string;
+                    
+                    try {
+                      const { error } = await supabase.functions.invoke("send-sms", {
+                        body: { to: phone, message }
+                      });
+                      
+                      if (error) throw error;
+                      
+                      toast({ title: "SMS sent successfully" });
+                      e.currentTarget.reset();
+                    } catch (error: any) {
+                      toast({
+                        title: "Failed to send SMS",
+                        description: error.message,
+                        variant: "destructive"
+                      });
+                    }
+                  }} className="space-y-4">
+                    <div>
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input id="phone" name="phone" type="tel" placeholder="+233..." required />
+                    </div>
+                    <div>
+                      <Label htmlFor="message">Message</Label>
+                      <Textarea id="message" name="message" rows={4} required />
+                    </div>
+                    <Button type="submit">Send SMS</Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Event Reminders</CardTitle>
+                  <CardDescription>Send SMS reminders for upcoming events</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={async () => {
+                    try {
+                      const { data, error } = await supabase.functions.invoke("event-reminders");
+                      
+                      if (error) throw error;
+                      
+                      toast({
+                        title: "Event reminders sent",
+                        description: `Sent ${data.sentCount} SMS messages for ${data.eventCount} upcoming events`
+                      });
+                    } catch (error: any) {
+                      toast({
+                        title: "Failed to send reminders",
+                        description: error.message,
+                        variant: "destructive"
+                      });
+                    }
+                  }}>
+                    Send Event Reminders Now
+                  </Button>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Sends SMS to all users with phone numbers about events happening in the next 24 hours.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="info">
