@@ -245,7 +245,7 @@ const Admin = () => {
                     Send Event Reminders Now
                   </Button>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Sends SMS to all users with phone numbers about events happening in the next 24 hours.
+                    Sends SMS to all users with phone numbers about all upcoming events.
                   </p>
                 </CardContent>
               </Card>

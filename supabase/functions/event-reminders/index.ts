@@ -16,15 +16,14 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get events happening in the next 24 hours
+    // Get all upcoming events
     const now = new Date();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
     const { data: upcomingEvents, error: eventsError } = await supabase
       .from('events')
       .select('*')
       .gte('event_date', now.toISOString())
-      .lte('event_date', tomorrow.toISOString());
+      .order('event_date', { ascending: true });
 
     if (eventsError) {
       console.error('Error fetching events:', eventsError);
@@ -55,7 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
       const formattedDate = eventDate.toLocaleDateString();
       const formattedTime = eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      const message = `Event Reminder: "${event.title}" is happening tomorrow on ${formattedDate} at ${formattedTime}. Venue: ${event.venue || 'TBA'}`;
+      const message = `Event Reminder: "${event.title}" is scheduled for ${formattedDate} at ${formattedTime}. Venue: ${event.venue || 'TBA'}`;
 
       for (const profile of profiles || []) {
         try {
