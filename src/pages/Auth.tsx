@@ -18,6 +18,8 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -30,6 +32,13 @@ const Auth = () => {
       }
     };
     checkUser();
+
+    // Check if this is a password reset callback
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    if (type === 'recovery') {
+      setIsResettingPassword(true);
+    }
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -109,6 +118,35 @@ const Auth = () => {
     }
   };
 
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password updated!",
+        description: "Your password has been successfully reset.",
+      });
+      setIsResettingPassword(false);
+      setNewPassword("");
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -129,16 +167,60 @@ const Auth = () => {
               </div>
             </div>
             <CardTitle className="text-2xl">
-              {isLogin ? "Welcome Back" : "Join Our Union"}
+              {isResettingPassword 
+                ? "Reset Your Password" 
+                : isLogin ? "Welcome Back" : "Join Our Union"}
             </CardTitle>
             <CardDescription>
-              {isLogin
+              {isResettingPassword
+                ? "Enter your new password below"
+                : isLogin
                 ? "Sign in to access your member dashboard"
                 : "Create your account to become a member"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleAuth} className="space-y-4">
+            {isResettingPassword ? (
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-hero"
+                  disabled={loading}
+                >
+                  {loading ? "Updating..." : "Update Password"}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleAuth} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full Name</Label>
@@ -253,6 +335,7 @@ const Auth = () => {
                 </button>
               </div>
             </form>
+            )}
           </CardContent>
         </Card>
       </div>
