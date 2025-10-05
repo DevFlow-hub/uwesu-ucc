@@ -1,13 +1,49 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, Clock, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import EventCountdown from "@/components/EventCountdown";
+import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Events = () => {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const { data } = await supabase.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
+      
+      setIsAdmin(!!data);
+    };
+
+    checkAdmin();
+  }, []);
+
   const { data: events, isLoading } = useQuery({
     queryKey: ["events"],
     queryFn: async () => {
@@ -35,6 +71,35 @@ const Events = () => {
     },
   });
 
+  const deleteEventMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", eventId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["past-events"] });
+      toast.success("Event deleted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to delete event");
+    },
+  });
+
+  const handleDeleteClick = (eventId: string) => {
+    setEventToDelete(eventId);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (eventToDelete) {
+      deleteEventMutation.mutate(eventToDelete);
+      setEventToDelete(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -57,8 +122,22 @@ const Events = () => {
               {events.map((event) => (
                 <Card key={event.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <CardTitle>{event.title}</CardTitle>
-                    <CardDescription>{event.description}</CardDescription>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <CardTitle>{event.title}</CardTitle>
+                        <CardDescription>{event.description}</CardDescription>
+                      </div>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(event.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <EventCountdown eventDate={event.event_date} />
@@ -115,6 +194,23 @@ const Events = () => {
       </main>
 
       <Footer />
+
+      <AlertDialog open={!!eventToDelete} onOpenChange={() => setEventToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
