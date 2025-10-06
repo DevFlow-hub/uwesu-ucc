@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Clock, Trash2, Mail, Bell } from "lucide-react";
 import { format } from "date-fns";
 import EventCountdown from "@/components/EventCountdown";
 import { toast } from "sonner";
@@ -19,6 +19,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Events = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -100,6 +106,30 @@ const Events = () => {
     }
   };
 
+  const sendReminderMutation = useMutation({
+    mutationFn: async ({ eventId, method }: { eventId: string; method: 'email' | 'push' }) => {
+      const { data, error } = await supabase.functions.invoke('send-event-reminder', {
+        body: { eventId, method },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      if (variables.method === 'email') {
+        toast.success(`Email reminders sent to ${data.sent} users`);
+      } else {
+        toast.success('Push notifications sent');
+      }
+    },
+    onError: () => {
+      toast.error("Failed to send reminders");
+    },
+  });
+
+  const handleSendReminder = (eventId: string, method: 'email' | 'push') => {
+    sendReminderMutation.mutate({ eventId, method });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -128,14 +158,33 @@ const Events = () => {
                         <CardDescription>{event.description}</CardDescription>
                       </div>
                       {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteClick(event.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                Send Reminder
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={() => handleSendReminder(event.id, 'email')}>
+                                <Mail className="mr-2 h-4 w-4" />
+                                Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleSendReminder(event.id, 'push')}>
+                                <Bell className="mr-2 h-4 w-4" />
+                                Push Notification
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteClick(event.id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </CardHeader>
