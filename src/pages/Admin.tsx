@@ -90,38 +90,42 @@ const Admin = () => {
   });
 
   const uploadImageMutation = useMutation({
-    mutationFn: async ({ file, title, eventName, categoryId }: any) => {
-      // Upload file to storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+    mutationFn: async ({ files, title, eventName, categoryId }: any) => {
+      const uploadPromises = files.map(async (file: File) => {
+        // Upload file to storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('gallery-images')
-        .upload(filePath, file);
+        const { error: uploadError } = await supabase.storage
+          .from('gallery-images')
+          .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('gallery-images')
-        .getPublicUrl(filePath);
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('gallery-images')
+          .getPublicUrl(filePath);
 
-      // Save metadata to database
-      const { error: dbError } = await supabase
-        .from('gallery_images')
-        .insert({
-          title,
-          event_name: eventName,
-          category_id: categoryId,
-          image_url: publicUrl,
-        });
+        // Save metadata to database
+        const { error: dbError } = await supabase
+          .from('gallery_images')
+          .insert({
+            title,
+            event_name: eventName,
+            category_id: categoryId,
+            image_url: publicUrl,
+          });
 
-      if (dbError) throw dbError;
+        if (dbError) throw dbError;
+      });
+
+      await Promise.all(uploadPromises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
-      toast({ title: "Image uploaded successfully" });
+      toast({ title: "Images uploaded successfully" });
     },
     onError: (error: any) => {
       toast({
@@ -158,19 +162,19 @@ const Admin = () => {
   const handleImageUpload = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const file = formData.get("image") as File;
+    const files = formData.getAll("images") as File[];
     
-    if (!file || file.size === 0) {
+    if (files.length === 0 || files.every(f => f.size === 0)) {
       toast({
-        title: "No file selected",
-        description: "Please select an image to upload",
+        title: "No files selected",
+        description: "Please select at least one image to upload",
         variant: "destructive",
       });
       return;
     }
 
     uploadImageMutation.mutate({
-      file,
+      files,
       title: formData.get("title"),
       eventName: formData.get("event_name"),
       categoryId: formData.get("category_id"),
@@ -263,12 +267,13 @@ const Admin = () => {
                 <CardContent>
                   <form onSubmit={handleImageUpload} className="space-y-4">
                     <div>
-                      <Label htmlFor="image">Image File</Label>
+                      <Label htmlFor="images">Image Files (Multiple)</Label>
                       <Input 
-                        id="image" 
-                        name="image" 
+                        id="images" 
+                        name="images" 
                         type="file" 
                         accept="image/*"
+                        multiple
                         required 
                       />
                     </div>
