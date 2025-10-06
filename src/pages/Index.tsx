@@ -4,6 +4,7 @@ import Stats from "@/components/Stats";
 import About from "@/components/About";
 import Executives from "@/components/Executives";
 import Footer from "@/components/Footer";
+import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 
 const Index = () => {
   return (
@@ -14,6 +15,7 @@ const Index = () => {
       <About />
       <Executives />
       <Footer />
+      <PushNotificationPrompt />
     </div>
   );
 };

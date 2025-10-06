@@ -75,10 +75,8 @@ export async function subscribeToPushNotifications() {
         .from('push_subscriptions')
         .upsert({
           user_id: user.id,
-          subscription: subscription.toJSON(),
+          subscription: subscription.toJSON() as any,
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
         });
 
       if (error) throw error;
