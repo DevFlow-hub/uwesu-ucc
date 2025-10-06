@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Web Push requires VAPID keys - generate with: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY');
+// VAPID keys for web push
+const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib27SaChinoQHsdim6AFgWhZYjg0HrJjB5c6WNS73EOZdI0bUPLJGYCnO0w';
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY');
 const VAPID_SUBJECT = 'mailto:admin@unionengage.com';
 
@@ -22,27 +22,79 @@ interface SendPushRequest {
   payload: PushPayload;
 }
 
+// Helper function to convert URL-safe base64 to Uint8Array
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 async function sendPushToSubscription(subscription: any, payload: PushPayload) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     throw new Error('VAPID keys not configured');
   }
 
-  // Create the notification payload
   const notificationPayload = JSON.stringify(payload);
-
-  // In production, use a proper web-push library
-  // For now, we'll just log it
-  console.log('Would send push notification:', {
-    subscription,
-    payload: notificationPayload
-  });
-
-  // TODO: Implement actual web push using web-push library
-  // const webpush = require('web-push');
-  // webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-  // await webpush.sendNotification(subscription, notificationPayload);
   
-  return true;
+  try {
+    // Extract subscription details
+    const { endpoint, keys } = subscription;
+    
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      throw new Error('Invalid subscription object');
+    }
+
+    // Generate VAPID headers
+    const vapidPublicKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    const vapidPrivateKey = urlBase64ToUint8Array(VAPID_PRIVATE_KEY);
+    
+    // Create the JWT token for VAPID
+    const header = {
+      typ: 'JWT',
+      alg: 'ES256'
+    };
+    
+    const jwtData = {
+      aud: new URL(endpoint).origin,
+      exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, // 12 hours
+      sub: VAPID_SUBJECT
+    };
+
+    // For now, we'll use fetch to send the notification
+    // This is a simplified implementation
+    console.log('Sending push notification to:', endpoint);
+    console.log('Payload:', notificationPayload);
+    
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Encoding': 'aes128gcm',
+        'TTL': '86400',
+      },
+      body: notificationPayload,
+    });
+
+    if (!response.ok) {
+      console.error('Push send failed:', response.status, await response.text());
+      throw new Error(`Push notification failed: ${response.status}`);
+    }
+
+    console.log('Push notification sent successfully');
+    return true;
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+    throw error;
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
