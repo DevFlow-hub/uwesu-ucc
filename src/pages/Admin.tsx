@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Admin = () => {
   const [user, setUser] = useState<any>(null);
@@ -75,6 +77,61 @@ const Admin = () => {
     },
   });
 
+  const { data: categories } = useQuery({
+    queryKey: ["gallery-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gallery_categories")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async ({ file, title, eventName, categoryId }: any) => {
+      // Upload file to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('gallery-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('gallery-images')
+        .getPublicUrl(filePath);
+
+      // Save metadata to database
+      const { error: dbError } = await supabase
+        .from('gallery_images')
+        .insert({
+          title,
+          event_name: eventName,
+          category_id: categoryId,
+          image_url: publicUrl,
+        });
+
+      if (dbError) throw dbError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
+      toast({ title: "Image uploaded successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEventSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -95,6 +152,30 @@ const Admin = () => {
       name: formData.get("name"),
       description: formData.get("description"),
     });
+    e.currentTarget.reset();
+  };
+
+  const handleImageUpload = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const file = formData.get("image") as File;
+    
+    if (!file || file.size === 0) {
+      toast({
+        title: "No file selected",
+        description: "Please select an image to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    uploadImageMutation.mutate({
+      file,
+      title: formData.get("title"),
+      eventName: formData.get("event_name"),
+      categoryId: formData.get("category_id"),
+    });
+    
     e.currentTarget.reset();
   };
 
@@ -153,25 +234,75 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="gallery">
-            <Card>
-              <CardHeader>
-                <CardTitle>Manage Gallery</CardTitle>
-                <CardDescription>Create categories and manage images</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleCategorySubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Category Name</Label>
-                    <Input id="name" name="name" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" name="description" />
-                  </div>
-                  <Button type="submit">Create Category</Button>
-                </form>
-              </CardContent>
-            </Card>
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create Category</CardTitle>
+                  <CardDescription>Add new gallery categories</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleCategorySubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Category Name</Label>
+                      <Input id="name" name="name" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea id="description" name="description" />
+                    </div>
+                    <Button type="submit">Create Category</Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upload Image</CardTitle>
+                  <CardDescription>Add new images to the gallery</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleImageUpload} className="space-y-4">
+                    <div>
+                      <Label htmlFor="image">Image File</Label>
+                      <Input 
+                        id="image" 
+                        name="image" 
+                        type="file" 
+                        accept="image/*"
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="image-title">Image Title</Label>
+                      <Input id="image-title" name="title" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="event_name">Event Name (Optional)</Label>
+                      <Input id="event_name" name="event_name" />
+                    </div>
+                    <div>
+                      <Label htmlFor="category_id">Category</Label>
+                      <Select name="category_id" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories?.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button type="submit" disabled={uploadImageMutation.isPending}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      {uploadImageMutation.isPending ? "Uploading..." : "Upload Image"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="notifications">
