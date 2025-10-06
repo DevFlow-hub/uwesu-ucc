@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,17 +25,31 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Missing required fields: to, subject, and html');
     }
 
-    const emailResponse = await resend.emails.send({
-      from: 'Union Events <onboarding@resend.dev>',
-      to: [to],
-      subject,
-      html,
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Union Events <onboarding@resend.dev>',
+        to: [to],
+        subject,
+        html,
+      }),
     });
 
-    console.log('Email sent successfully:', emailResponse);
+    const data = await emailResponse.json();
+
+    if (!emailResponse.ok) {
+      console.error('Resend error:', data);
+      throw new Error(data.message || 'Failed to send email');
+    }
+
+    console.log('Email sent successfully:', data.id);
 
     return new Response(
-      JSON.stringify({ success: true, id: emailResponse.data?.id }),
+      JSON.stringify({ success: true, id: data.id }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
