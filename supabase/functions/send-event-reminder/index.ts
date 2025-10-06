@@ -84,19 +84,33 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
     } else {
-      // Push notification would be handled client-side via service worker
-      // This endpoint just returns success for push as the actual sending happens on client
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Push notifications will be sent from client',
-          event 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
+      // Send push notifications
+      const { data: subscriptions, error: subsError } = await supabase
+        .from('push_subscriptions')
+        .select('*');
+
+      if (subsError) {
+        throw new Error('Failed to fetch push subscriptions');
+      }
+
+      // Call the push notification function
+      const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-push-notification', {
+        body: {
+          payload: {
+            title: `Event Reminder: ${event.title}`,
+            body: `${event.description || 'Upcoming event'} - ${new Date(event.event_date).toLocaleString()}`,
+            url: '/events'
+          }
         }
-      );
+      });
+
+      if (pushError) {
+        console.error('Failed to send push notifications:', pushError);
+        errorCount = subscriptions?.length || 0;
+      } else {
+        successCount = pushResult?.sent || 0;
+        errorCount = pushResult?.failed || 0;
+      }
     }
 
     console.log(`Reminders sent: ${successCount} successful, ${errorCount} failed`);
