@@ -13,34 +13,36 @@ const Hero = () => {
         <img
           src={heroBanner}
           alt="Union solidarity"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-105 animate-[zoom_20s_ease-in-out_infinite_alternate]"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/90 to-primary/80" />
+        {/* Animated gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 via-transparent to-transparent opacity-50" />
       </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 z-10 text-center text-primary-foreground">
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-          <div className="inline-flex items-center gap-2 bg-secondary/20 backdrop-blur-sm px-4 py-2 rounded-full border border-secondary/30">
-            <Users className="h-4 w-4" />
-            <span className="text-sm font-medium">Stronger Together</span>
+          <div className="inline-flex items-center gap-2 bg-secondary/20 backdrop-blur-md px-6 py-3 rounded-full border border-secondary/40 shadow-glow animate-pulse-glow">
+            <Users className="h-5 w-5 text-secondary" />
+            <span className="text-sm font-semibold tracking-wide">Stronger Together</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tight">
             United for Workers'
-            <span className="block bg-gradient-accent bg-clip-text text-transparent mt-2">
+            <span className="block bg-gradient-to-r from-secondary via-secondary-glow to-secondary bg-clip-text text-transparent mt-3 drop-shadow-lg">
               Rights & Dignity
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-primary-foreground/90 max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-primary-foreground/95 max-w-2xl mx-auto leading-relaxed font-light">
             Building a fair workplace through solidarity, advocacy, and collective action for all members.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
             <Button 
               size="lg" 
-              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground text-lg px-8"
+              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground text-lg px-10 py-6 shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-105 font-semibold"
               onClick={() => navigate("/auth")}
             >
               Join Our Union
@@ -49,7 +51,7 @@ const Hero = () => {
             <Button 
               size="lg" 
               variant="outline" 
-              className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 text-lg px-8 backdrop-blur-sm"
+              className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-2 border-primary-foreground/40 hover:border-primary-foreground/60 text-lg px-10 py-6 backdrop-blur-md transition-all duration-300 hover:scale-105 font-semibold"
               onClick={() => {
                 const element = document.getElementById("about");
                 element?.scrollIntoView({ behavior: "smooth" });
@@ -62,7 +64,11 @@ const Hero = () => {
       </div>
 
       {/* Decorative Elements */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/50 to-transparent z-10" />
+      
+      {/* Floating decorative shapes */}
+      <div className="absolute top-20 left-10 w-20 h-20 bg-secondary/10 rounded-full blur-xl animate-float" style={{ animationDelay: "0s" }} />
+      <div className="absolute bottom-40 right-20 w-32 h-32 bg-secondary/10 rounded-full blur-xl animate-float" style={{ animationDelay: "1s" }} />
     </section>
   );
 };

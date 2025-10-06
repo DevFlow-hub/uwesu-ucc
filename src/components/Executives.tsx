@@ -34,13 +34,21 @@ const Executives = () => {
   }, []);
 
   return (
-    <section id="executives" className="py-20 bg-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+    <section id="executives" className="py-24 bg-gradient-subtle relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 opacity-[0.03]">
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-secondary rounded-full blur-3xl" />
+      </div>
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-20 animate-fade-in">
+          <div className="inline-block mb-4">
+            <span className="text-sm font-bold tracking-wider text-secondary uppercase">Leadership</span>
+          </div>
+          <h2 className="text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight">
             Our Leadership Team
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
             Meet the dedicated individuals leading our union forward
           </p>
         </div>

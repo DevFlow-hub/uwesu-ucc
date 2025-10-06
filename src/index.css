@@ -17,36 +17,42 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 20%;
 
-    /* Blue-black - professional and strong */
-    --primary: 220 30% 15%;
+    /* Deep blue - professional and strong */
+    --primary: 220 40% 18%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 220 40% 30%;
     
     /* Vibrant teal accent */
-    --secondary: 176 70% 45%;
+    --secondary: 176 65% 48%;
     --secondary-foreground: 0 0% 100%;
+    --secondary-glow: 176 65% 60%;
 
-    --muted: 210 40% 96%;
+    --muted: 210 40% 98%;
     --muted-foreground: 220 15% 45%;
 
-    --accent: 176 70% 45%;
+    --accent: 176 65% 48%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 220 30% 15%;
+    --border: 220 20% 92%;
+    --input: 220 20% 92%;
+    --ring: 220 40% 18%;
 
     --radius: 0.75rem;
 
-    /* Custom gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(220 30% 12%) 0%, hsl(220 30% 18%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(176 70% 45%) 0%, hsl(176 70% 55%) 100%);
+    /* Rich gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(220 40% 12%) 0%, hsl(220 40% 20%) 50%, hsl(220 40% 16%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(176 65% 45%) 0%, hsl(176 65% 55%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(220 40% 99%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
     
-    /* Shadows */
-    --shadow-card: 0 4px 6px -1px hsl(220 30% 10% / 0.15), 0 2px 4px -1px hsl(220 30% 10% / 0.1);
-    --shadow-elevated: 0 10px 15px -3px hsl(220 30% 10% / 0.15), 0 4px 6px -2px hsl(220 30% 10% / 0.1);
+    /* Enhanced shadows */
+    --shadow-card: 0 4px 6px -1px hsl(220 40% 10% / 0.1), 0 2px 4px -1px hsl(220 40% 10% / 0.06);
+    --shadow-elevated: 0 20px 25px -5px hsl(220 40% 10% / 0.15), 0 10px 10px -5px hsl(220 40% 10% / 0.08);
+    --shadow-glow: 0 0 20px hsl(176 65% 48% / 0.2);
+    --shadow-hero: 0 30px 60px -15px hsl(0 0% 0% / 0.4);
   }
 
   .dark {

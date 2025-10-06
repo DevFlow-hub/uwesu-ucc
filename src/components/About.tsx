@@ -33,42 +33,58 @@ const About = () => {
   }, []);
 
   return (
-    <section id="about" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+    <section id="about" className="py-24 bg-background relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 opacity-[0.02]">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-primary rounded-full blur-3xl" />
+      </div>
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-20 animate-fade-in">
+          <div className="inline-block mb-4">
+            <span className="text-sm font-bold tracking-wider text-secondary uppercase">Who We Are</span>
+          </div>
+          <h2 className="text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight">
             About Our Union
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
             Dedicated to protecting workers' rights and building a stronger community
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <Card className="border-2 hover:border-primary/50 transition-all duration-300 shadow-card hover:shadow-elevated">
-            <CardContent className="p-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Eye className="h-6 w-6 text-primary" />
+        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          <Card className="group relative overflow-hidden border-2 border-border hover:border-primary/50 transition-all duration-500 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02]">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-10 relative">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-xl blur-lg group-hover:blur-xl transition-all" />
+                  <div className="relative p-4 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
+                    <Eye className="h-8 w-8 text-primary" />
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground">Our Vision</h3>
+                <h3 className="text-3xl font-extrabold text-foreground">Our Vision</h3>
               </div>
-              <p className="text-muted-foreground leading-relaxed">
-                {unionInfo.vision}
+              <p className="text-muted-foreground leading-relaxed text-lg">
+                {unionInfo.vision || "Loading vision statement..."}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-2 hover:border-secondary/50 transition-all duration-300 shadow-card hover:shadow-elevated">
-            <CardContent className="p-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-secondary/10 rounded-lg">
-                  <Target className="h-6 w-6 text-secondary" />
+          <Card className="group relative overflow-hidden border-2 border-border hover:border-secondary/50 transition-all duration-500 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02]">
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-10 relative">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-secondary/20 rounded-xl blur-lg group-hover:blur-xl transition-all" />
+                  <div className="relative p-4 bg-secondary/10 rounded-xl group-hover:bg-secondary/20 transition-colors">
+                    <Target className="h-8 w-8 text-secondary" />
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground">Our Mission</h3>
+                <h3 className="text-3xl font-extrabold text-foreground">Our Mission</h3>
               </div>
-              <p className="text-muted-foreground leading-relaxed">
-                {unionInfo.mission}
+              <p className="text-muted-foreground leading-relaxed text-lg">
+                {unionInfo.mission || "Loading mission statement..."}
               </p>
             </CardContent>
           </Card>
