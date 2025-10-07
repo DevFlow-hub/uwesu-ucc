@@ -8,10 +8,10 @@ const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <Users className="h-6 w-6" />
-              <span className="text-xl font-bold">Workers Union</span>
+              <span className="text-xl font-bold">UPPER WEST STUDENTS UNION</span>
             </div>
             <p className="text-primary-foreground/80 text-sm">
-              Building a stronger future for workers through unity, advocacy, and collective action.
+              Unity In Diversity
             </p>
           </div>
           
@@ -35,22 +35,22 @@ const Footer = () => {
             <ul className="space-y-3 text-sm text-primary-foreground/80">
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <span>contact@workersunion.org</span>
+                <span>uwesu-ucc@gmail.com</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span>+1 (555) 123-4567</span>
+                <span>+233 59 458 2488</span>
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                <span>123 Union Street, City, State</span>
+                <span>University of Cape Coast</span>
               </li>
             </ul>
           </div>
         </div>
         
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-sm text-primary-foreground/60">
-          <p>&copy; {new Date().getFullYear()} Workers Union. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} UPPER WEST STUDENTS UNION. All rights reserved.</p>
         </div>
       </div>
     </footer>
