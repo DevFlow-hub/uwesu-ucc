@@ -136,6 +136,85 @@ const Admin = () => {
     },
   });
 
+  const { data: executives } = useQuery({
+    queryKey: ["executives"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("is_executive", true)
+        .order("designation");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const createExecutiveMutation = useMutation({
+    mutationFn: async (executiveData: any) => {
+      const { avatar, ...profileData } = executiveData;
+      
+      let avatar_url = null;
+      
+      // Upload avatar if provided
+      if (avatar) {
+        const fileExt = avatar.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatar);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+        
+        avatar_url = publicUrl;
+      }
+
+      // Create or update profile
+      const { error } = await supabase
+        .from("profiles")
+        .upsert({
+          ...profileData,
+          avatar_url,
+          is_executive: true,
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["executives"] });
+      toast({ title: "Executive profile created successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create executive profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleExecutiveSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const avatarFile = formData.get("avatar") as File;
+    
+    createExecutiveMutation.mutate({
+      user_id: crypto.randomUUID(), // Generate a new UUID for the profile
+      full_name: formData.get("full_name"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
+      designation: formData.get("designation"),
+      avatar: avatarFile?.size > 0 ? avatarFile : null,
+    });
+    
+    e.currentTarget.reset();
+  };
+
   const handleEventSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -200,8 +279,9 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="events" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 max-w-3xl">
+          <TabsList className="grid w-full grid-cols-5 max-w-4xl">
             <TabsTrigger value="events">Events</TabsTrigger>
+            <TabsTrigger value="executives">Executives</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="info">Union Info</TabsTrigger>
@@ -235,6 +315,85 @@ const Admin = () => {
                 </form>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="executives">
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add Executive</CardTitle>
+                  <CardDescription>Create portfolio positions and add executive details</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleExecutiveSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="avatar">Profile Picture</Label>
+                      <Input 
+                        id="avatar" 
+                        name="avatar" 
+                        type="file" 
+                        accept="image/*"
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="full_name">Full Name</Label>
+                      <Input id="full_name" name="full_name" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="designation">Position/Designation</Label>
+                      <Input 
+                        id="designation" 
+                        name="designation" 
+                        placeholder="e.g., President, Secretary, Treasurer"
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" name="email" type="email" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input id="phone" name="phone" type="tel" />
+                    </div>
+                    <Button type="submit" disabled={createExecutiveMutation.isPending}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      {createExecutiveMutation.isPending ? "Creating..." : "Add Executive"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Current Executives</CardTitle>
+                  <CardDescription>Manage existing executive profiles</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {executives && executives.length > 0 ? (
+                    <div className="space-y-4">
+                      {executives.map((exec) => (
+                        <div key={exec.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                          <img 
+                            src={exec.avatar_url || "/placeholder.svg"} 
+                            alt={exec.full_name}
+                            className="w-16 h-16 rounded-full object-cover"
+                          />
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{exec.full_name}</h3>
+                            <p className="text-sm text-muted-foreground">{exec.designation}</p>
+                            <p className="text-sm text-muted-foreground">{exec.email}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No executives added yet</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="gallery">
