@@ -217,6 +217,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -249,6 +270,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      update_active_members_count: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
