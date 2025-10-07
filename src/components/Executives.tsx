@@ -82,14 +82,8 @@ const Executives = () => {
                     </h3>
                     
                     {exec.designation && (
-                      <p className="text-sm font-medium text-secondary mb-3">
+                      <p className="text-sm font-medium text-secondary mb-4">
                         {exec.designation}
-                      </p>
-                    )}
-                    
-                    {exec.bio && (
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                        {exec.bio}
                       </p>
                     )}
                     
