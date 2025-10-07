@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Upload } from "lucide-react";
+import { Upload, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Admin = () => {
   const [user, setUser] = useState<any>(null);
@@ -174,13 +175,14 @@ const Admin = () => {
         avatar_url = publicUrl;
       }
 
-      // Create or update profile
+      // Create profile (user_id can be null for executives without auth accounts)
       const { error } = await supabase
         .from("profiles")
-        .upsert({
+        .insert({
           ...profileData,
           avatar_url,
           is_executive: true,
+          user_id: null,
         });
       
       if (error) throw error;
@@ -198,13 +200,34 @@ const Admin = () => {
     },
   });
 
+  const deleteExecutiveMutation = useMutation({
+    mutationFn: async (executiveId: string) => {
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", executiveId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["executives"] });
+      toast({ title: "Executive removed successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to remove executive",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleExecutiveSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const avatarFile = formData.get("avatar") as File;
     
     createExecutiveMutation.mutate({
-      user_id: crypto.randomUUID(), // Generate a new UUID for the profile
       full_name: formData.get("full_name"),
       email: formData.get("email"),
       phone: formData.get("phone"),
@@ -375,16 +398,25 @@ const Admin = () => {
                     <div className="space-y-4">
                       {executives.map((exec) => (
                         <div key={exec.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                          <img 
-                            src={exec.avatar_url || "/placeholder.svg"} 
-                            alt={exec.full_name}
-                            className="w-16 h-16 rounded-full object-cover"
-                          />
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage src={exec.avatar_url || undefined} alt={exec.full_name} />
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {exec.full_name.split(" ").map((n: string) => n[0]).join("")}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1">
                             <h3 className="font-semibold">{exec.full_name}</h3>
                             <p className="text-sm text-muted-foreground">{exec.designation}</p>
                             <p className="text-sm text-muted-foreground">{exec.email}</p>
                           </div>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => deleteExecutiveMutation.mutate(exec.id)}
+                            disabled={deleteExecutiveMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
