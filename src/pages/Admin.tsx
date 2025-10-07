@@ -222,6 +222,62 @@ const Admin = () => {
     },
   });
 
+  const { data: unionInfo } = useQuery({
+    queryKey: ["union-info"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("union_info")
+        .select("key, value")
+        .in("key", ["total_members", "active_members"]);
+      
+      if (error) throw error;
+      
+      return data.reduce((acc, item) => {
+        acc[item.key] = item.value;
+        return acc;
+      }, {} as Record<string, string>);
+    },
+  });
+
+  const updateUnionInfoMutation = useMutation({
+    mutationFn: async (totalMembers: string) => {
+      const { error } = await supabase
+        .from("union_info")
+        .upsert({ key: "total_members", value: totalMembers });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["union-info"] });
+      toast({ title: "Total members updated successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update total members",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const refreshActiveMembersMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("update_active_members_count");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["union-info"] });
+      toast({ title: "Active members count refreshed" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to refresh active members",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleExecutiveSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -283,6 +339,27 @@ const Admin = () => {
     });
     
     e.currentTarget.reset();
+  };
+
+  const handleUnionInfoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const totalMembers = formData.get("total_members") as string;
+    
+    if (!totalMembers || parseInt(totalMembers) < 0) {
+      toast({
+        title: "Invalid input",
+        description: "Please enter a valid number",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    updateUnionInfoMutation.mutate(totalMembers);
+  };
+
+  const handleRefreshActiveMembers = () => {
+    refreshActiveMembersMutation.mutate();
   };
 
   if (loading) {
@@ -524,17 +601,50 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="info">
-            <Card>
-              <CardHeader>
-                <CardTitle>Update Union Information</CardTitle>
-                <CardDescription>Manage vision, mission, and other union details</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Use the backend to manage union information directly.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Member Statistics</CardTitle>
+                  <CardDescription>Update total member count and view active members</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleUnionInfoSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="total_members">Total Members</Label>
+                      <Input 
+                        id="total_members" 
+                        name="total_members" 
+                        type="number" 
+                        placeholder="Enter total number of members"
+                        defaultValue={unionInfo?.total_members || ""}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Active Members (Last 30 Days)</Label>
+                      <p className="text-2xl font-bold text-primary">
+                        {unionInfo?.active_members || "0"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Automatically calculated based on user interactions
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" disabled={updateUnionInfoMutation.isPending}>
+                        Update Total Members
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={handleRefreshActiveMembers}
+                        disabled={refreshActiveMembersMutation.isPending}
+                      >
+                        Refresh Active Count
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
