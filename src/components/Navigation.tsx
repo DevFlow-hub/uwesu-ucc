@@ -61,7 +61,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold text-foreground">Workers Union</span>
+            <span className="text-xl font-bold text-foreground">UPPER WEST STUDENTS UNION</span>
           </Link>
           
           <div className="hidden md:flex items-center gap-6">

@@ -387,7 +387,7 @@ const Admin = () => {
             <TabsTrigger value="info">Union Info</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="events">
+          <TabsContent value="events" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Create New Event</CardTitle>
@@ -417,7 +417,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="executives">
+          <TabsContent value="executives" className="space-y-6">
             <div className="grid gap-6">
               <Card>
                 <CardHeader>
@@ -505,7 +505,7 @@ const Admin = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="gallery">
+          <TabsContent value="gallery" className="space-y-6">
             <div className="grid gap-6">
               <Card>
                 <CardHeader>
@@ -578,7 +578,7 @@ const Admin = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="notifications">
+          <TabsContent value="notifications" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Push Notifications</CardTitle>
@@ -600,7 +600,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="info">
+          <TabsContent value="info" className="space-y-6">
             <div className="grid gap-6">
               <Card>
                 <CardHeader>

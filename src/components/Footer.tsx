@@ -43,7 +43,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                <span>University of Cape Coast</span>
+                <span>University of Cape Coast, Ghana</span>
               </li>
             </ul>
           </div>
