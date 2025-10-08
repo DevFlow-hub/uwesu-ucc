@@ -578,29 +578,17 @@ const Admin = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="notifications" className="space-y-6">
+          <TabsContent value="notifications" className="space-y-6 mb-6">
             <Card>
               <CardHeader>
                 <CardTitle>Push Notifications</CardTitle>
-                <CardDescription>Event reminders are sent via email and push notifications through the Events page</CardDescription>
+                <CardDescription>Send notifications to all members</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-muted-foreground">
-                  To send event reminders:
-                </p>
-                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                  <li>Go to the Events page</li>
-                  <li>Click "Send Reminder" on any upcoming event</li>
-                  <li>Choose Email or Push Notification</li>
-                </ol>
-                <p className="text-sm text-muted-foreground mt-4">
-                  Users will receive notifications about upcoming events if they have enabled notifications in their browser.
-                </p>
-              </CardContent>
+...
             </Card>
           </TabsContent>
 
-          <TabsContent value="info" className="space-y-6">
+          <TabsContent value="info" className="space-y-6 mt-6">
             <div className="grid gap-6">
               <Card>
                 <CardHeader>
