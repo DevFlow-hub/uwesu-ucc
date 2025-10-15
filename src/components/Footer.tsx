@@ -51,7 +51,9 @@ const Footer = () => {
         
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-sm text-primary-foreground/60">
           <p>&copy; {new Date().getFullYear()} UPPER WEST STUDENTS UNION. All rights reserved.</p>
-          <p className="mt-2">Developed by the 2025/2026 Executive Board</p>
+          <div className="mt-2 overflow-hidden">
+            <p className="animate-crawl whitespace-nowrap">Developed by the 2025/2026 Executive Board</p>
+          </div>
         </div>
       </div>
     </footer>
