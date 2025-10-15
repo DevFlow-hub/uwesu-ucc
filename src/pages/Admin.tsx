@@ -5,6 +5,8 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import UserActivityNotifications from "@/components/UserActivityNotifications";
 import { NotificationSender } from "@/components/NotificationSender";
+import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
+import { RealtimeNotifications } from "@/components/RealtimeNotifications";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -374,6 +376,8 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <RealtimeNotifications />
+      <PushNotificationPrompt />
       
       <main className="container mx-auto px-4 py-24">
         <div className="mb-12">
