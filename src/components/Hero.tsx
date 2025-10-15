@@ -1,10 +1,29 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import heroBanner from "@/assets/hero-banner.png";
 
 const Hero = () => {
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check initial session
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -40,14 +59,16 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Button 
-              size="lg" 
-              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground text-lg px-10 py-6 shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-105 font-semibold"
-              onClick={() => navigate("/auth")}
-            >
-              Join Our Union
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            {!isAuthenticated && (
+              <Button 
+                size="lg" 
+                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground text-lg px-10 py-6 shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-105 font-semibold"
+                onClick={() => navigate("/auth")}
+              >
+                Join Our Union
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            )}
             <Button 
               size="lg" 
               variant="outline" 
