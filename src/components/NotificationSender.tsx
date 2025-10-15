@@ -62,8 +62,10 @@ export const NotificationSender = () => {
       // Send push notifications to all subscribed users
       const { error: pushError } = await supabase.functions.invoke("send-push-notification", {
         body: {
-          title,
-          body: message,
+          payload: {
+            title,
+            body: message,
+          },
         },
       });
 
@@ -93,8 +95,10 @@ export const NotificationSender = () => {
     try {
       const { error: pushError } = await supabase.functions.invoke("send-push-notification", {
         body: {
-          title: notif.title,
-          body: notif.message,
+          payload: {
+            title: notif.title,
+            body: notif.message,
+          },
         },
       });
 
