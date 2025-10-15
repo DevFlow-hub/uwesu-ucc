@@ -243,7 +243,7 @@ const Admin = () => {
     mutationFn: async (totalMembers: string) => {
       const { error } = await supabase
         .from("union_info")
-        .upsert({ key: "total_members", value: totalMembers });
+        .upsert({ key: "total_members", value: totalMembers }, { onConflict: "key" });
       
       if (error) throw error;
     },
