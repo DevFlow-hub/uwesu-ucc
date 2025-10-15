@@ -154,6 +154,33 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_broadcast: boolean | null
+          message: string
+          sent_by: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_broadcast?: boolean | null
+          message: string
+          sent_by?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_broadcast?: boolean | null
+          message?: string
+          sent_by?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
