@@ -63,6 +63,10 @@ const Auth = () => {
             user_name: data.user.user_metadata?.full_name || null,
             event_type: "login",
           });
+          
+          // Set flag for notification prompt
+          sessionStorage.setItem('just-logged-in', 'true');
+          window.dispatchEvent(new Event('user-logged-in'));
         }
 
         toast({

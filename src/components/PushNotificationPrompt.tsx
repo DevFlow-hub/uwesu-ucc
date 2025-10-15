@@ -11,16 +11,27 @@ export const PushNotificationPrompt = () => {
 
   useEffect(() => {
     checkSubscriptionStatus();
+    
+    // Listen for login event to show prompt
+    const handleLoginEvent = () => {
+      checkSubscriptionStatus();
+    };
+    
+    window.addEventListener('user-logged-in', handleLoginEvent);
+    return () => window.removeEventListener('user-logged-in', handleLoginEvent);
   }, []);
 
   const checkSubscriptionStatus = async () => {
     const subscribed = await isPushSubscribed();
     setIsSubscribed(subscribed);
     
-    // Show prompt if not subscribed and haven't dismissed it
+    // Check if user just logged in
+    const justLoggedIn = sessionStorage.getItem('just-logged-in');
     const dismissed = localStorage.getItem('push-notification-dismissed');
-    if (!subscribed && !dismissed) {
+    
+    if (!subscribed && justLoggedIn && !dismissed) {
       setShowPrompt(true);
+      sessionStorage.removeItem('just-logged-in');
     }
   };
 
