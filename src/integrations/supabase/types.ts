@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          user_email: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          user_email: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          user_email?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string

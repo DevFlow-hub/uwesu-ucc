@@ -48,12 +48,22 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
+
+        // Log the login event
+        if (data.user) {
+          await supabase.from("admin_notifications").insert({
+            user_id: data.user.id,
+            user_email: data.user.email || email,
+            user_name: data.user.user_metadata?.full_name || null,
+            event_type: "login",
+          });
+        }
 
         toast({
           title: "Welcome back!",

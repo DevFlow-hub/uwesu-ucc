@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import UserActivityNotifications from "@/components/UserActivityNotifications";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -579,13 +580,25 @@ const Admin = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="notifications" className="space-y-6 mb-6">
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Activity Notifications</CardTitle>
+                <CardDescription>Recent user signups and logins</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserActivityNotifications />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Push Notifications</CardTitle>
                 <CardDescription>Send notifications to all members</CardDescription>
               </CardHeader>
-...
+              <CardContent>
+                {/* Existing push notification content */}
+              </CardContent>
             </Card>
           </TabsContent>
 
