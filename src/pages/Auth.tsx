@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { authSchema } from "@/lib/validation-schemas";
+import { z } from "zod";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -47,23 +49,23 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Validate inputs
+      const validationData = isLogin 
+        ? { email, password }
+        : { email, password, fullName };
+      
+      const validated = authSchema.parse(validationData);
+
       if (isLogin) {
         const { error, data } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+          email: validated.email,
+          password: validated.password,
         });
 
         if (error) throw error;
 
-        // Log the login event
+        // Login event now logged automatically via database trigger
         if (data.user) {
-          await supabase.from("admin_notifications").insert({
-            user_id: data.user.id,
-            user_email: data.user.email || email,
-            user_name: data.user.user_metadata?.full_name || null,
-            event_type: "login",
-          });
-          
           // Set flag for notification prompt
           sessionStorage.setItem('just-logged-in', 'true');
           window.dispatchEvent(new Event('user-logged-in'));
@@ -76,11 +78,11 @@ const Auth = () => {
         navigate("/");
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          email: validated.email,
+          password: validated.password,
           options: {
             data: {
-              full_name: fullName,
+              full_name: validated.fullName,
             },
             emailRedirectTo: `${window.location.origin}/`,
           },
@@ -95,11 +97,19 @@ const Auth = () => {
         setIsLogin(true);
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }

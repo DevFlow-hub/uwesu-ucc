@@ -8,6 +8,8 @@ import { Bell, Send, Trash2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { notificationSchema } from "@/lib/validation-schemas";
+import { z } from "zod";
 
 export const NotificationSender = () => {
   const [title, setTitle] = useState("");
@@ -43,18 +45,15 @@ export const NotificationSender = () => {
   });
 
   const handleSend = async () => {
-    if (!title || !message) {
-      toast.error("Please fill in both title and message");
-      return;
-    }
-
     setSending(true);
     
     try {
+      // Validate inputs
+      const validated = notificationSchema.parse({ title, message });
       // Insert notification into database (for real-time subscribers)
       const { data, error: dbError } = await supabase
         .from("notifications")
-        .insert({ title, message })
+        .insert({ title: validated.title, message: validated.message })
         .select()
         .single();
 
@@ -64,8 +63,8 @@ export const NotificationSender = () => {
       const { error: pushError } = await supabase.functions.invoke("send-push-notification", {
         body: {
           payload: {
-            title,
-            body: message,
+            title: validated.title,
+            body: validated.message,
           },
         },
       });
@@ -84,8 +83,12 @@ export const NotificationSender = () => {
       // Refetch notifications
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
     } catch (error: any) {
-      console.error("Error sending notification:", error);
-      toast.error(error.message || "Failed to send notification");
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        console.error("Error sending notification:", error);
+        toast.error(error.message || "Failed to send notification");
+      }
     } finally {
       setSending(false);
     }
