@@ -25,13 +25,10 @@ export const PushNotificationPrompt = () => {
     const subscribed = await isPushSubscribed();
     setIsSubscribed(subscribed);
     
-    // Check if user just logged in
-    const justLoggedIn = sessionStorage.getItem('just-logged-in');
     const dismissed = localStorage.getItem('push-notification-dismissed');
     
-    if (!subscribed && justLoggedIn && !dismissed) {
+    if (!subscribed && !dismissed) {
       setShowPrompt(true);
-      sessionStorage.removeItem('just-logged-in');
     }
   };
 
