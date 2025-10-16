@@ -93,6 +93,14 @@ export const NotificationSender = () => {
   const handleResend = async (notif: any) => {
     setSending(true);
     try {
+      // Insert notification into database (for real-time subscribers)
+      const { error: dbError } = await supabase
+        .from("notifications")
+        .insert({ title: notif.title, message: notif.message });
+
+      if (dbError) throw dbError;
+
+      // Send push notifications
       const { error: pushError } = await supabase.functions.invoke("send-push-notification", {
         body: {
           payload: {
@@ -104,7 +112,7 @@ export const NotificationSender = () => {
 
       if (pushError) {
         console.error("Push notification error:", pushError);
-        toast.warning("Push notifications may have failed");
+        toast.warning("Notification resent but push notifications may have failed");
       } else {
         toast.success("Notification resent!");
       }
