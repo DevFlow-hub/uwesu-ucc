@@ -13,6 +13,7 @@ export const NotificationSender = () => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: notifications } = useQuery({
@@ -179,7 +180,7 @@ export const NotificationSender = () => {
         <CardContent>
           {notifications && notifications.length > 0 ? (
             <div className="space-y-3">
-              {notifications.map((notif) => (
+              {(showAllNotifications ? notifications : notifications.slice(0, 5)).map((notif) => (
                 <div key={notif.id} className="flex items-start gap-3 p-4 border rounded-lg">
                   <Bell className="h-5 w-5 text-primary mt-0.5" />
                   <div className="flex-1 min-w-0">
@@ -211,6 +212,15 @@ export const NotificationSender = () => {
                   </div>
                 </div>
               ))}
+              {notifications.length > 5 && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAllNotifications(!showAllNotifications)}
+                  className="w-full"
+                >
+                  {showAllNotifications ? "Show Less" : `Show More (${notifications.length - 5} more)`}
+                </Button>
+              )}
             </div>
           ) : (
             <p className="text-center text-muted-foreground py-8">
