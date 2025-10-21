@@ -98,14 +98,18 @@ const Admin = () => {
   const uploadImageMutation = useMutation({
     mutationFn: async ({ files, title, eventName, categoryId }: any) => {
       const uploadPromises = files.map(async (file: File) => {
-        // Upload file to storage
+        // Upload file to storage with quality preservation
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('gallery-images')
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type,
+          });
 
         if (uploadError) throw uploadError;
 

@@ -68,10 +68,27 @@ const Gallery = () => {
   });
 
   const handleDownload = async (imageUrl: string, title: string) => {
-    const link = document.createElement("a");
-    link.href = imageUrl;
-    link.download = `${title}.jpg`;
-    link.click();
+    try {
+      // Fetch the original image to preserve quality
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      // Create download link with original blob
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${title}.jpg`;
+      link.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "Failed to download image",
+        variant: "destructive",
+      });
+    }
   };
 
   const deleteImageMutation = useMutation({
@@ -165,6 +182,8 @@ const Gallery = () => {
                   src={image.image_url}
                   alt={image.title}
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <CardContent className="p-4">
