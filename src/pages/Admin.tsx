@@ -23,6 +23,7 @@ const Admin = () => {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -325,12 +326,22 @@ const Admin = () => {
   const handleImageUpload = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const files = formData.getAll("images") as File[];
+    const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
+    const files = fileInput?.files ? Array.from(fileInput.files) : [];
     
-    if (files.length === 0 || files.every(f => f.size === 0)) {
+    if (files.length === 0) {
       toast({
         title: "No files selected",
         description: "Please select at least one image to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedCategoryId) {
+      toast({
+        title: "No category selected",
+        description: "Please select a category",
         variant: "destructive",
       });
       return;
@@ -340,10 +351,11 @@ const Admin = () => {
       files,
       title: formData.get("title"),
       eventName: formData.get("event_name"),
-      categoryId: formData.get("category_id"),
+      categoryId: selectedCategoryId,
     });
     
     e.currentTarget.reset();
+    setSelectedCategoryId("");
   };
 
   const handleUnionInfoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -562,7 +574,7 @@ const Admin = () => {
                     </div>
                     <div>
                       <Label htmlFor="category_id">Category</Label>
-                      <Select name="category_id" required>
+                      <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId} required>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
