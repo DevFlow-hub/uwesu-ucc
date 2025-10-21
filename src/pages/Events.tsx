@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Trash2, Mail, Bell } from "lucide-react";
+import { Calendar, MapPin, Clock, Trash2, Bell } from "lucide-react";
 import { format } from "date-fns";
 import EventCountdown from "@/components/EventCountdown";
 import { toast } from "sonner";
@@ -19,12 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const Events = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -107,27 +101,23 @@ const Events = () => {
   };
 
   const sendReminderMutation = useMutation({
-    mutationFn: async ({ eventId, method }: { eventId: string; method: 'email' | 'push' }) => {
+    mutationFn: async (eventId: string) => {
       const { data, error } = await supabase.functions.invoke('send-event-reminder', {
-        body: { eventId, method },
+        body: { eventId, method: 'push' },
       });
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables) => {
-      if (variables.method === 'email') {
-        toast.success(`Email reminders sent to ${data.sent} users`);
-      } else {
-        toast.success('Push notifications sent');
-      }
+    onSuccess: () => {
+      toast.success('Push notifications sent to all members');
     },
     onError: () => {
       toast.error("Failed to send reminders");
     },
   });
 
-  const handleSendReminder = (eventId: string, method: 'email' | 'push') => {
-    sendReminderMutation.mutate({ eventId, method });
+  const handleSendReminder = (eventId: string) => {
+    sendReminderMutation.mutate(eventId);
   };
 
   return (
@@ -159,23 +149,14 @@ const Events = () => {
                       </div>
                       {isAdmin && (
                         <div className="flex gap-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                Send Reminder
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuItem onClick={() => handleSendReminder(event.id, 'email')}>
-                                <Mail className="mr-2 h-4 w-4" />
-                                Email
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleSendReminder(event.id, 'push')}>
-                                <Bell className="mr-2 h-4 w-4" />
-                                Push Notification
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSendReminder(event.id)}
+                          >
+                            <Bell className="mr-2 h-4 w-4" />
+                            Send Push Reminder
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
