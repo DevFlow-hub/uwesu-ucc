@@ -390,7 +390,7 @@ const Admin = () => {
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="executives">Executives</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="notifications">Alerts</TabsTrigger>
             <TabsTrigger value="info">Union Info</TabsTrigger>
           </TabsList>
 
