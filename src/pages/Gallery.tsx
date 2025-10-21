@@ -160,11 +160,11 @@ const Gallery = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {images?.map((image) => (
             <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
-              <div className="relative aspect-video overflow-hidden">
+              <div className="relative w-full h-80 overflow-hidden bg-muted/30">
                 <img
                   src={image.image_url}
                   alt={image.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
               <CardContent className="p-4">
