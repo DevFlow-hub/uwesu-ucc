@@ -120,7 +120,7 @@ const UserActivityNotifications = () => {
             return (
               <div
                 key={notification.id}
-                className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/5 transition-colors"
+                className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg hover:bg-accent/5 transition-colors"
               >
                 <div className={`p-2 rounded-full ${
                   notification.event_type === "signup" 
@@ -134,8 +134,8 @@ const UserActivityNotifications = () => {
                   )}
                 </div>
                 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="flex-1 min-w-0 w-full sm:w-auto">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <p className="font-medium truncate">
                       {notification.user_name || "New User"}
                     </p>
@@ -157,16 +157,17 @@ const UserActivityNotifications = () => {
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex gap-2 w-full sm:w-auto sm:flex-col">
                   {isAdmin ? (
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => revokeAdminMutation.mutate(notification.user_id)}
                       disabled={revokeAdminMutation.isPending}
+                      className="flex-1 sm:flex-none"
                     >
-                      <ShieldOff className="h-4 w-4 mr-1" />
-                      Revoke
+                      <ShieldOff className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Revoke</span>
                     </Button>
                   ) : (
                     <Button
@@ -174,9 +175,10 @@ const UserActivityNotifications = () => {
                       variant="outline"
                       onClick={() => grantAdminMutation.mutate(notification.user_id)}
                       disabled={grantAdminMutation.isPending}
+                      className="flex-1 sm:flex-none"
                     >
-                      <Shield className="h-4 w-4 mr-1" />
-                      Make Admin
+                      <Shield className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Make Admin</span>
                     </Button>
                   )}
                 </div>

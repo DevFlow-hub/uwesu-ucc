@@ -435,12 +435,12 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="events" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 max-w-4xl">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 max-w-4xl">
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="executives">Executives</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="notifications">Alerts</TabsTrigger>
-            <TabsTrigger value="info">Union Info</TabsTrigger>
+            <TabsTrigger value="info" className="col-span-2 sm:col-span-1">Union Info</TabsTrigger>
           </TabsList>
 
           <TabsContent value="events" className="space-y-6">
