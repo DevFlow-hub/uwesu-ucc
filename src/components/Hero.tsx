@@ -47,15 +47,15 @@ const Hero = () => {
             <span className="text-sm font-semibold tracking-wide">Stronger Together</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tight">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-extrabold leading-tight tracking-tight animate-bounce-in">
             UPPER WEST
             <span className="block bg-gradient-to-r from-secondary via-secondary-glow to-secondary bg-clip-text text-transparent mt-3 drop-shadow-lg">
               STUDENTS UNION
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-primary-foreground/95 max-w-2xl mx-auto leading-relaxed font-light">
-            Unity In Diversity
+          <p className="text-xl md:text-2xl text-primary-foreground/95 max-w-2xl mx-auto leading-relaxed font-display font-light animate-scale-in" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
+            Building Bridges, Celebrating Culture
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">

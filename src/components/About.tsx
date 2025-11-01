@@ -44,16 +44,16 @@ const About = () => {
           <div className="inline-block mb-4">
             <span className="text-sm font-bold tracking-wider text-secondary uppercase">Who We Are</span>
           </div>
-          <h2 className="text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight">
+          <h2 className="text-4xl md:text-6xl font-heading font-extrabold text-foreground mb-6 leading-tight">
             About Our Union
           </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-display font-light leading-relaxed">
             Dedicated to protecting workers' rights and building a stronger community
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          <Card className="group relative overflow-hidden border-2 border-border hover:border-primary/50 transition-all duration-500 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02]">
+          <Card className="group relative overflow-hidden border-2 border-border hover:border-primary/50 transition-all duration-500 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02] animate-slide-up" style={{ animationDelay: "0.1s" }}>
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-10 relative">
               <div className="flex items-center gap-4 mb-6">
@@ -63,7 +63,7 @@ const About = () => {
                     <Eye className="h-8 w-8 text-primary" />
                   </div>
                 </div>
-                <h3 className="text-3xl font-extrabold text-foreground">Our Vision</h3>
+                <h3 className="text-3xl font-heading font-extrabold text-foreground">Our Vision</h3>
               </div>
               <p className="text-muted-foreground leading-relaxed text-lg">
                 {unionInfo.vision || "Loading vision statement..."}
@@ -71,7 +71,7 @@ const About = () => {
             </CardContent>
           </Card>
 
-          <Card className="group relative overflow-hidden border-2 border-border hover:border-secondary/50 transition-all duration-500 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02]">
+          <Card className="group relative overflow-hidden border-2 border-border hover:border-secondary/50 transition-all duration-500 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02] animate-slide-up" style={{ animationDelay: "0.25s" }}>
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-10 relative">
               <div className="flex items-center gap-4 mb-6">
@@ -81,7 +81,7 @@ const About = () => {
                     <Target className="h-8 w-8 text-secondary" />
                   </div>
                 </div>
-                <h3 className="text-3xl font-extrabold text-foreground">Our Mission</h3>
+                <h3 className="text-3xl font-heading font-extrabold text-foreground">Our Mission</h3>
               </div>
               <p className="text-muted-foreground leading-relaxed text-lg">
                 {unionInfo.mission || "Loading mission statement..."}

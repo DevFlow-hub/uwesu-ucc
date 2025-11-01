@@ -186,8 +186,8 @@ const Gallery = () => {
       
       <main className="container mx-auto px-4 py-24">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 gradient-text">Union Gallery</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <h1 className="text-4xl font-heading font-bold mb-4 gradient-text animate-fade-in">Union Gallery</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto font-display animate-slide-up">
             Browse through our collection of memorable moments and events
           </p>
         </div>
@@ -221,8 +221,8 @@ const Gallery = () => {
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {images?.slice(0, displayCount).map((image) => (
-            <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
+          {images?.slice(0, displayCount).map((image, index) => (
+            <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-all duration-500 hover:scale-[1.02] border-2 border-border hover:border-secondary/30 animate-scale-in" style={{ animationDelay: `${(index % 9) * 0.05}s` }}>
               <div className="relative w-full h-80 overflow-hidden bg-muted/30">
                 <img
                   src={image.image_url}

@@ -72,10 +72,10 @@ const Stats = () => {
                 <div className="absolute inset-0 bg-secondary/10 rounded-full blur-xl group-hover:blur-2xl transition-all" />
                 <item.icon className={`h-14 w-14 mx-auto relative ${item.color} drop-shadow-lg`} />
               </div>
-              <div className="text-5xl font-extrabold text-foreground mb-3 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">
+              <div className="text-5xl font-heading font-extrabold text-foreground mb-3 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">
                 {typeof item.value === "number" ? item.value.toLocaleString() : item.value}
               </div>
-              <div className="text-muted-foreground font-semibold text-lg tracking-wide">{item.label}</div>
+              <div className="text-muted-foreground font-display font-semibold text-lg tracking-wide">{item.label}</div>
             </div>
           ))}
         </div>

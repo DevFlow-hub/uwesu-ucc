@@ -45,10 +45,10 @@ const Executives = () => {
           <div className="inline-block mb-4">
             <span className="text-sm font-bold tracking-wider text-secondary uppercase">Leadership</span>
           </div>
-          <h2 className="text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight">
+          <h2 className="text-4xl md:text-6xl font-heading font-extrabold text-foreground mb-6 leading-tight">
             Our Leadership Team
           </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-display font-light leading-relaxed">
             Meet the dedicated individuals leading our union forward
           </p>
         </div>
@@ -65,19 +65,19 @@ const Executives = () => {
             {executives.map((exec, index) => (
               <Card
                 key={exec.id}
-                className="overflow-hidden hover:shadow-elevated transition-all duration-300 animate-slide-up"
+                className="group overflow-hidden hover:shadow-elevated transition-all duration-500 animate-slide-up border-2 border-border hover:border-secondary/50 hover:scale-105 bg-gradient-card"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center">
-                    <Avatar className="h-24 w-24 mb-4 border-4 border-primary/10">
+                    <Avatar className="h-24 w-24 mb-4 border-4 border-primary/10 group-hover:border-secondary/30 transition-all duration-300 group-hover:scale-110">
                       <AvatarImage src={exec.avatar_url || undefined} alt={exec.full_name} />
                       <AvatarFallback className="bg-primary/10 text-primary text-xl">
                         {exec.full_name.split(" ").map(n => n[0]).join("")}
                       </AvatarFallback>
                     </Avatar>
                     
-                    <h3 className="text-xl font-bold text-foreground mb-1">
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-1">
                       {exec.full_name}
                     </h3>
                     

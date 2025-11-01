@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
+import ScrollingTagline from "@/components/ScrollingTagline";
 import Stats from "@/components/Stats";
 import About from "@/components/About";
 import Executives from "@/components/Executives";
@@ -17,6 +18,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <ScrollingTagline />
       <Hero />
       <Stats />
       <About />
