@@ -435,13 +435,25 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="events" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 max-w-4xl">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 max-w-4xl">
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="executives">Executives</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="notifications">Alerts</TabsTrigger>
-            <TabsTrigger value="info" className="col-span-2 sm:col-span-1">Union Info</TabsTrigger>
           </TabsList>
+          
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                const infoTab = document.querySelector('[value="info"]') as HTMLButtonElement;
+                infoTab?.click();
+              }}
+              className="w-full sm:w-auto"
+            >
+              Union Info
+            </Button>
+          </div>
 
           <TabsContent value="events" className="space-y-6">
             <Card>
@@ -685,7 +697,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="info" className="space-y-6 mt-6">
+          <TabsContent value="info" className="space-y-6">
             <div className="grid gap-6">
               <Card>
                 <CardHeader>

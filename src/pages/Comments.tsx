@@ -54,18 +54,27 @@ const Comments = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
 
+      if (!commentsData || commentsData.length === 0) return [];
+
       // Fetch profiles separately
       const userIds = commentsData?.map(c => c.user_id) || [];
-      const { data: profilesData } = await supabase
+      const { data: profilesData, error: profileError } = await supabase
         .from("profiles")
         .select("user_id, full_name")
         .in("user_id", userIds);
 
+      if (profileError) {
+        console.error("Error fetching profiles:", profileError);
+      }
+
       // Merge data
-      return commentsData?.map(comment => ({
-        ...comment,
-        profile_name: profilesData?.find(p => p.user_id === comment.user_id)?.full_name || "Anonymous"
-      }));
+      return commentsData?.map(comment => {
+        const profile = profilesData?.find(p => p.user_id === comment.user_id);
+        return {
+          ...comment,
+          profile_name: profile?.full_name || "Anonymous"
+        };
+      });
     },
   });
 
