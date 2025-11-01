@@ -8,6 +8,7 @@ import Executives from "@/components/Executives";
 import Footer from "@/components/Footer";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { RealtimeNotifications } from "@/components/RealtimeNotifications";
+import { NotificationButton } from "@/components/NotificationButton";
 import { trackActivity } from "@/lib/activity-tracker";
 
 const Index = () => {
@@ -20,6 +21,9 @@ const Index = () => {
       <Navigation />
       <ScrollingTagline />
       <Hero />
+      <div className="container mx-auto px-4 py-6 flex justify-center">
+        <NotificationButton />
+      </div>
       <Stats />
       <About />
       <Executives />
