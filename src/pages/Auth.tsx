@@ -81,11 +81,15 @@ const Auth = () => {
 
         if (error) throw error;
 
+        // Set flag for notification prompt and dispatch event
+        sessionStorage.setItem('just-logged-in', 'true');
+        window.dispatchEvent(new Event('user-logged-in'));
+
         toast({
           title: "Account created!",
-          description: "Welcome to the union. You can now log in.",
+          description: "You have been automatically logged in.",
         });
-        setIsLogin(true);
+        navigate("/");
       }
     } catch (error: any) {
       if (error instanceof z.ZodError) {

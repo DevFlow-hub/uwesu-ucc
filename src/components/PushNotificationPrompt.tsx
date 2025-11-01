@@ -14,7 +14,10 @@ export const PushNotificationPrompt = () => {
     
     // Listen for login event to show prompt
     const handleLoginEvent = () => {
-      checkSubscriptionStatus();
+      // Slight delay to ensure user sees the prompt
+      setTimeout(() => {
+        checkSubscriptionStatus();
+      }, 1000);
     };
     
     window.addEventListener('user-logged-in', handleLoginEvent);
@@ -26,9 +29,12 @@ export const PushNotificationPrompt = () => {
     setIsSubscribed(subscribed);
     
     const dismissed = localStorage.getItem('push-notification-dismissed');
+    const justLoggedIn = sessionStorage.getItem('just-logged-in');
     
-    if (!subscribed && !dismissed) {
+    // Show prompt if not subscribed, not dismissed, and user just logged in
+    if (!subscribed && !dismissed && justLoggedIn) {
       setShowPrompt(true);
+      sessionStorage.removeItem('just-logged-in'); // Clear flag
     }
   };
 
