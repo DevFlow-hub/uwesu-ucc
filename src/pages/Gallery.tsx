@@ -14,6 +14,7 @@ const Gallery = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [displayCount, setDisplayCount] = useState(9);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -69,19 +70,64 @@ const Gallery = () => {
 
   const handleDownload = async (imageUrl: string, title: string) => {
     try {
-      // Fetch the original image to preserve quality
+      // Fetch the original image
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       
-      // Create download link with original blob
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${title}.jpg`;
-      link.click();
+      // Create an image element to get dimensions
+      const img = new Image();
+      const imgUrl = URL.createObjectURL(blob);
       
-      // Clean up
-      window.URL.revokeObjectURL(url);
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imgUrl;
+      });
+      
+      // Create canvas to compress image while maintaining quality
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      
+      // Set max dimensions while maintaining aspect ratio
+      const maxWidth = 1920;
+      const maxHeight = 1920;
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width *= ratio;
+        height *= ratio;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw image with high quality
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, width, height);
+      }
+      
+      // Convert to blob with optimized quality (0.92 provides excellent quality with smaller file size)
+      canvas.toBlob(
+        (compressedBlob) => {
+          if (compressedBlob) {
+            const url = window.URL.createObjectURL(compressedBlob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${title}.jpg`;
+            link.click();
+            
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            window.URL.revokeObjectURL(imgUrl);
+          }
+        },
+        "image/jpeg",
+        0.92
+      );
     } catch (error) {
       toast({
         title: "Download failed",
@@ -175,7 +221,7 @@ const Gallery = () => {
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {images?.map((image) => (
+          {images?.slice(0, displayCount).map((image) => (
             <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
               <div className="relative w-full h-80 overflow-hidden bg-muted/30">
                 <img
@@ -215,6 +261,18 @@ const Gallery = () => {
             </Card>
           ))}
         </div>
+
+        {images && images.length > displayCount && (
+          <div className="flex justify-center mt-8">
+            <Button
+              onClick={() => setDisplayCount(prev => prev + 9)}
+              variant="outline"
+              size="lg"
+            >
+              View More
+            </Button>
+          </div>
+        )}
 
         {images?.length === 0 && (
           <div className="text-center py-12">

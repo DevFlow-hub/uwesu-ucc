@@ -83,6 +83,39 @@ const Admin = () => {
     },
   });
 
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryId: string) => {
+      // First check if there are images in this category
+      const { data: images } = await supabase
+        .from("gallery_images")
+        .select("id")
+        .eq("category_id", categoryId)
+        .limit(1);
+
+      if (images && images.length > 0) {
+        throw new Error("Cannot delete category with existing images. Please remove all images first.");
+      }
+
+      const { error } = await supabase
+        .from("gallery_categories")
+        .delete()
+        .eq("id", categoryId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery-categories"] });
+      toast({ title: "Category deleted successfully" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete category",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: categories } = useQuery({
     queryKey: ["gallery-categories"],
     queryFn: async () => {
@@ -547,6 +580,43 @@ const Admin = () => {
                     </div>
                     <Button type="submit">Create Category</Button>
                   </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Manage Categories</CardTitle>
+                  <CardDescription>View and delete existing categories</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {categories && categories.length > 0 ? (
+                    <div className="space-y-2">
+                      {categories.map((category) => (
+                        <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <h3 className="font-semibold">{category.name}</h3>
+                            {category.description && (
+                              <p className="text-sm text-muted-foreground">{category.description}</p>
+                            )}
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete "${category.name}"?`)) {
+                                deleteCategoryMutation.mutate(category.id);
+                              }
+                            }}
+                            disabled={deleteCategoryMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No categories created yet</p>
+                  )}
                 </CardContent>
               </Card>
 
