@@ -54,9 +54,15 @@ const Hero = () => {
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-primary-foreground/95 max-w-2xl mx-auto leading-relaxed font-display font-light animate-scale-in" style={{ animationDelay: "0.2s", animationFillMode: "both" }}>
-            Building Bridges, Celebrating Culture
-          </p>
+          <div className="relative overflow-hidden max-w-2xl mx-auto py-4">
+            <div className="flex whitespace-nowrap animate-scroll">
+              {[...Array(10)].map((_, i) => (
+                <span key={i} className="text-xl md:text-2xl text-primary-foreground/95 font-display font-light mx-8">
+                  Unity In Diversity
+                </span>
+              ))}
+            </div>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
             {!isAuthenticated && (
