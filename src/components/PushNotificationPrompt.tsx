@@ -62,7 +62,10 @@ export const PushNotificationPrompt = () => {
     localStorage.setItem('push-notification-dismissed', 'true');
   };
 
-  if (!showPrompt || isSubscribed) return null;
+  if (!showPrompt || isSubscribed) {
+    console.log('Push prompt not showing. showPrompt:', showPrompt, 'isSubscribed:', isSubscribed);
+    return null;
+  }
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-md animate-in slide-in-from-bottom-5">

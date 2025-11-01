@@ -6,6 +6,7 @@ import About from "@/components/About";
 import Executives from "@/components/Executives";
 import Footer from "@/components/Footer";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
+import { NotificationTestButton } from "@/components/NotificationTestButton";
 import { RealtimeNotifications } from "@/components/RealtimeNotifications";
 import { trackActivity } from "@/lib/activity-tracker";
 
@@ -22,6 +23,7 @@ const Index = () => {
       <About />
       <Executives />
       <Footer />
+      <NotificationTestButton />
       <PushNotificationPrompt />
       <RealtimeNotifications />
     </div>
