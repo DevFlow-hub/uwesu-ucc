@@ -25,14 +25,19 @@ export const PushNotificationPrompt = () => {
   }, []);
 
   const checkSubscriptionStatus = async () => {
+    console.log('Checking push notification status...');
     const subscribed = await isPushSubscribed();
+    console.log('Is subscribed:', subscribed);
     setIsSubscribed(subscribed);
     
     const dismissed = localStorage.getItem('push-notification-dismissed');
     const justLoggedIn = sessionStorage.getItem('just-logged-in');
     
+    console.log('Dismissed:', dismissed, 'Just logged in:', justLoggedIn);
+    
     // Show prompt if not subscribed, not dismissed, and user just logged in
     if (!subscribed && !dismissed && justLoggedIn) {
+      console.log('Showing push notification prompt');
       setShowPrompt(true);
       sessionStorage.removeItem('just-logged-in'); // Clear flag
     }
@@ -40,11 +45,14 @@ export const PushNotificationPrompt = () => {
 
   const handleEnable = async () => {
     try {
+      console.log('Attempting to enable push notifications...');
       await subscribeToPushNotifications();
+      console.log('Push notifications enabled successfully');
       setIsSubscribed(true);
       setShowPrompt(false);
       toast.success("Push notifications enabled!");
     } catch (error: any) {
+      console.error('Failed to enable push notifications:', error);
       toast.error(error.message || "Failed to enable notifications");
     }
   };
