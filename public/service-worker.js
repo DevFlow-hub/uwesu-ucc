@@ -18,7 +18,8 @@ self.addEventListener('push', (event) => {
   
   if (event.data) {
     console.log('Event.data type:', typeof event.data);
-    console.log('Event.data methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(event.data)));
+    const text = event.data.text();
+    console.log('Raw data as text:', text);
   }
   
   let notificationData = {
