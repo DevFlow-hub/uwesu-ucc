@@ -111,16 +111,21 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
     console.log('Payload:', JSON.stringify(payload));
     
     const vapidToken = await createVapidAuthToken(endpoint);
+    
+    // Encode the payload as base64 to ensure it's transmitted correctly
     const payloadString = JSON.stringify(payload);
+    const encoder = new TextEncoder();
+    const data = encoder.encode(payloadString);
     
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Authorization': `vapid t=${vapidToken}, k=${VAPID_PUBLIC_KEY}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/octet-stream',
+        'Content-Encoding': 'aes128gcm',
         'TTL': '86400',
       },
-      body: payloadString,
+      body: data,
     });
 
     if (!response.ok) {

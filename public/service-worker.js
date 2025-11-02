@@ -12,7 +12,6 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
-  console.log('Push event data:', event.data);
   
   let notificationData = {
     title: 'Union Event',
@@ -20,32 +19,21 @@ self.addEventListener('push', (event) => {
     url: '/events'
   };
   
-  try {
-    if (event.data) {
-      const parsed = event.data.json();
-      console.log('Parsed push data:', parsed);
+  // Try to parse the data
+  if (event.data) {
+    try {
+      const text = event.data.text();
+      console.log('Push data received:', text);
+      const parsed = JSON.parse(text);
+      console.log('Parsed notification data:', parsed);
+      
       notificationData = {
         title: parsed.title || notificationData.title,
         body: parsed.body || notificationData.body,
         url: parsed.url || notificationData.url
       };
-    }
-  } catch (error) {
-    console.error('Error parsing push data:', error);
-    // Try as text
-    try {
-      if (event.data) {
-        const text = event.data.text();
-        console.log('Push data as text:', text);
-        const parsed = JSON.parse(text);
-        notificationData = {
-          title: parsed.title || notificationData.title,
-          body: parsed.body || notificationData.body,
-          url: parsed.url || notificationData.url
-        };
-      }
-    } catch (e) {
-      console.error('Error parsing push data as text:', e);
+    } catch (error) {
+      console.error('Error parsing push data:', error);
     }
   }
   
@@ -60,7 +48,7 @@ self.addEventListener('push', (event) => {
     renotify: true
   };
 
-  console.log('Showing notification with title:', notificationData.title, 'and body:', options.body);
+  console.log('Showing notification - Title:', notificationData.title, '| Body:', notificationData.body);
 
   event.waitUntil(
     self.registration.showNotification(notificationData.title, options)
