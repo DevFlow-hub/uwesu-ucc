@@ -40,7 +40,17 @@ export async function requestNotificationPermission() {
     throw new Error('Notifications are not supported in this browser');
   }
 
+  // Check current permission
+  if (Notification.permission === 'denied') {
+    throw new Error('Notification permission denied. Please enable notifications in your browser settings.');
+  }
+
+  if (Notification.permission === 'granted') {
+    return true;
+  }
+
   const permission = await Notification.requestPermission();
+  console.log('Notification permission:', permission);
   return permission === 'granted';
 }
 
@@ -51,6 +61,8 @@ export async function subscribeToPushNotifications() {
       throw new Error('Notifications not supported');
     }
 
+    console.log('Current notification permission:', Notification.permission);
+
     // Request permission
     const permission = await requestNotificationPermission();
     if (!permission) {
@@ -59,15 +71,18 @@ export async function subscribeToPushNotifications() {
 
     // Register service worker
     const registration = await registerServiceWorker();
+    console.log('Service worker registered');
     
     // Wait for service worker to be ready
     await navigator.serviceWorker.ready;
+    console.log('Service worker ready');
 
     // Subscribe to push notifications
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
+    console.log('Push subscription created:', subscription);
 
     // Save subscription to database
     const { data: { user } } = await supabase.auth.getUser();
@@ -83,6 +98,16 @@ export async function subscribeToPushNotifications() {
         });
 
       if (error) throw error;
+      console.log('Subscription saved to database');
+    }
+
+    // Test the subscription with a local notification
+    if ('showNotification' in registration) {
+      registration.showNotification('Notifications Enabled!', {
+        body: 'You will now receive event updates',
+        icon: '/favicon.png',
+        badge: '/favicon.png'
+      });
     }
 
     return subscription;

@@ -14,17 +14,18 @@ self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
   
   const data = event.data ? event.data.json() : {};
+  console.log('Push event data:', data);
+  
   const title = data.title || 'Union Event';
   const options = {
     body: data.body || 'You have a new notification',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: '/favicon.png',
+    badge: '/favicon.png',
     data: data.url || '/',
-    requireInteraction: true,
-    actions: [
-      { action: 'view', title: 'View Details' },
-      { action: 'close', title: 'Dismiss' }
-    ]
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+    tag: 'union-notification',
+    renotify: true
   };
 
   event.waitUntil(
