@@ -115,8 +115,8 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `vapid t=${vapidToken}, k=${VAPID_PUBLIC_KEY}`,
-        'Content-Type': 'application/json',
+        'Authorization': `WebPush ${vapidToken}`,
+        'Content-Type': 'application/json;charset=utf-8',
         'TTL': '86400',
       },
       body: payloadString,
@@ -128,7 +128,7 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
       throw new Error(`Push failed: ${response.status}`);
     }
 
-    console.log('Push sent successfully');
+    console.log('Push sent successfully:', response.status);
     return true;
   } catch (error) {
     console.error('Error sending push:', error);
