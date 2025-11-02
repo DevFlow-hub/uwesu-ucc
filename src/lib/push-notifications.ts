@@ -1,8 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// VAPID public key - you'll need to generate this
-// For now using a placeholder - in production, generate with: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib27SaChinoQHsdim6AFgWhZYjg0HrJjB5c6WNS73EOZdI0bUPLJGYCnO0w';
+// VAPID public key
+const VAPID_PUBLIC_KEY = 'BJRcTOeWpTqbceWrwiaBWtcD8tIXHvpj3pKka16ccIUSdmisTkev8tScwZNdN4d1dsL0soZqUh85EFSliKfwb1Y';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);

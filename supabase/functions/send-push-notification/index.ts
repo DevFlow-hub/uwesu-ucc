@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // VAPID keys for web push
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib27SaChinoQHsdim6AFgWhZYjg0HrJjB5c6WNS73EOZdI0bUPLJGYCnO0w';
+const VAPID_PUBLIC_KEY = 'BJRcTOeWpTqbceWrwiaBWtcD8tIXHvpj3pKka16ccIUSdmisTkev8tScwZNdN4d1dsL0soZqUh85EFSliKfwb1Y';
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY');
 const VAPID_SUBJECT = 'mailto:admin@unionengage.com';
 
@@ -22,71 +22,120 @@ interface SendPushRequest {
   payload: PushPayload;
 }
 
-// Helper function to convert URL-safe base64 to Uint8Array
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+// Helper to convert base64url to Uint8Array
+function base64UrlToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
-    .replace(/\-/g, '+')
+    .replace(/-/g, '+')
     .replace(/_/g, '/');
-
+  
   const rawData = atob(base64);
   const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
+  
+  for (let i = 0; i < rawData.length; i++) {
     outputArray[i] = rawData.charCodeAt(i);
   }
+  
   return outputArray;
+}
+
+// Helper to convert Uint8Array to base64url
+function uint8ArrayToBase64Url(array: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < array.length; i++) {
+    binary += String.fromCharCode(array[i]);
+  }
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
+// Create VAPID JWT token
+async function createVapidAuthToken(endpoint: string): Promise<string> {
+  const audience = new URL(endpoint).origin;
+  
+  // JWT Header
+  const header = {
+    typ: 'JWT',
+    alg: 'ES256'
+  };
+  
+  // JWT Payload
+  const payload = {
+    aud: audience,
+    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, // 12 hours
+    sub: VAPID_SUBJECT
+  };
+  
+  const encodedHeader = uint8ArrayToBase64Url(new TextEncoder().encode(JSON.stringify(header)));
+  const encodedPayload = uint8ArrayToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
+  
+  const unsignedToken = `${encodedHeader}.${encodedPayload}`;
+  
+  // Convert VAPID keys to JWK format for crypto.subtle
+  const publicKeyBytes = base64UrlToUint8Array(VAPID_PUBLIC_KEY);
+  const privateKeyBytes = base64UrlToUint8Array(VAPID_PRIVATE_KEY!);
+  
+  const jwk = {
+    kty: 'EC',
+    crv: 'P-256',
+    x: uint8ArrayToBase64Url(publicKeyBytes.slice(1, 33)),
+    y: uint8ArrayToBase64Url(publicKeyBytes.slice(33, 65)),
+    d: uint8ArrayToBase64Url(privateKeyBytes),
+  };
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    'jwk',
+    jwk,
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    false,
+    ['sign']
+  );
+  
+  // Sign the token
+  const signature = await crypto.subtle.sign(
+    { name: 'ECDSA', hash: { name: 'SHA-256' } },
+    cryptoKey,
+    new TextEncoder().encode(unsignedToken)
+  );
+  
+  const encodedSignature = uint8ArrayToBase64Url(new Uint8Array(signature));
+  
+  return `${unsignedToken}.${encodedSignature}`;
 }
 
 async function sendPushToSubscription(subscription: any, payload: PushPayload) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     throw new Error('VAPID keys not configured');
   }
-
-  const notificationPayload = JSON.stringify(payload);
   
   try {
-    // Extract subscription details
-    const { endpoint, keys } = subscription;
-    
-    if (!endpoint || !keys?.p256dh || !keys?.auth) {
-      throw new Error('Invalid subscription object');
-    }
-
-    // Generate VAPID headers
-    const vapidPublicKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-    const vapidPrivateKey = urlBase64ToUint8Array(VAPID_PRIVATE_KEY);
-    
-    // Create the JWT token for VAPID
-    const header = {
-      typ: 'JWT',
-      alg: 'ES256'
-    };
-    
-    const jwtData = {
-      aud: new URL(endpoint).origin,
-      exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, // 12 hours
-      sub: VAPID_SUBJECT
-    };
-
-    // For now, we'll use fetch to send the notification
-    // This is a simplified implementation
+    const endpoint = subscription.endpoint;
     console.log('Sending push notification to:', endpoint);
-    console.log('Payload:', notificationPayload);
+    console.log('Payload:', JSON.stringify(payload));
+    
+    // Create VAPID authorization token
+    const vapidToken = await createVapidAuthToken(endpoint);
+    
+    // Encrypt the payload (simplified - in production you'd use proper encryption)
+    const payloadString = JSON.stringify(payload);
     
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
+        'Authorization': `vapid t=${vapidToken}, k=${VAPID_PUBLIC_KEY}`,
         'Content-Type': 'application/octet-stream',
         'Content-Encoding': 'aes128gcm',
         'TTL': '86400',
       },
-      body: notificationPayload,
+      body: payloadString,
     });
 
     if (!response.ok) {
-      console.error('Push send failed:', response.status, await response.text());
-      throw new Error(`Push notification failed: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Push send failed:', response.status, errorText);
+      throw new Error(`Push notification failed: ${response.status} - ${errorText}`);
     }
 
     console.log('Push notification sent successfully');
