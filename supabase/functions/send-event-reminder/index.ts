@@ -134,8 +134,8 @@ const handler = async (req: Request): Promise<Response> => {
         throw new Error('Failed to fetch push subscriptions');
       }
 
-      // Call the push notification function
-      const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-push-notification', {
+      // Call the push notification function with auth header
+      const { data: pushResult, error: pushError } = await supabaseClient.functions.invoke('send-push-notification', {
         body: {
           payload: {
             title: `Event Reminder: ${event.title}`,
