@@ -12,34 +12,58 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
+  console.log('Push event data:', event.data);
   
-  let notificationData = {};
+  let notificationData = {
+    title: 'Union Event',
+    body: 'You have a new notification',
+    url: '/events'
+  };
   
   try {
     if (event.data) {
-      notificationData = event.data.json();
-      console.log('Parsed push data:', notificationData);
+      const parsed = event.data.json();
+      console.log('Parsed push data:', parsed);
+      notificationData = {
+        title: parsed.title || notificationData.title,
+        body: parsed.body || notificationData.body,
+        url: parsed.url || notificationData.url
+      };
     }
   } catch (error) {
     console.error('Error parsing push data:', error);
+    // Try as text
+    try {
+      if (event.data) {
+        const text = event.data.text();
+        console.log('Push data as text:', text);
+        const parsed = JSON.parse(text);
+        notificationData = {
+          title: parsed.title || notificationData.title,
+          body: parsed.body || notificationData.body,
+          url: parsed.url || notificationData.url
+        };
+      }
+    } catch (e) {
+      console.error('Error parsing push data as text:', e);
+    }
   }
   
-  const title = notificationData.title || 'Union Event';
   const options = {
-    body: notificationData.body || 'You have a new notification',
+    body: notificationData.body,
     icon: '/favicon.png',
     badge: '/favicon.png',
-    data: notificationData.url || '/events',
+    data: { url: notificationData.url },
     requireInteraction: true,
     vibrate: [200, 100, 200],
     tag: 'union-event-' + Date.now(),
     renotify: true
   };
 
-  console.log('Showing notification with title:', title, 'and body:', options.body);
+  console.log('Showing notification with title:', notificationData.title, 'and body:', options.body);
 
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    self.registration.showNotification(notificationData.title, options)
   );
 });
 

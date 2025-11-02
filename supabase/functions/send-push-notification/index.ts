@@ -99,117 +99,6 @@ async function createVapidAuthToken(endpoint: string): Promise<string> {
   return `${unsignedToken}.${encodedSignature}`;
 }
 
-// Encrypt payload using Web Push encryption protocol
-async function encryptPayload(
-  payload: string,
-  userPublicKey: string,
-  userAuth: string
-): Promise<{ ciphertext: Uint8Array; salt: Uint8Array; publicKey: Uint8Array }> {
-  const payloadBytes = new TextEncoder().encode(payload);
-  
-  // Generate local key pair
-  const localKeyPair = await crypto.subtle.generateKey(
-    { name: 'ECDH', namedCurve: 'P-256' },
-    true,
-    ['deriveBits']
-  );
-  
-  // Import user's public key
-  const userPublicKeyBytes = base64UrlToUint8Array(userPublicKey);
-  const importedUserPublicKey = await crypto.subtle.importKey(
-    'raw',
-    userPublicKeyBytes as BufferSource,
-    { name: 'ECDH', namedCurve: 'P-256' },
-    true,
-    []
-  );
-  
-  // Derive shared secret
-  const sharedSecret = await crypto.subtle.deriveBits(
-    { name: 'ECDH', public: importedUserPublicKey },
-    localKeyPair.privateKey,
-    256
-  );
-  
-  // Export local public key
-  const localPublicKey = await crypto.subtle.exportKey('raw', localKeyPair.publicKey);
-  const localPublicKeyBytes = new Uint8Array(localPublicKey);
-  
-  // Generate salt
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  
-  // Import auth secret
-  const authBytes = base64UrlToUint8Array(userAuth);
-  
-  // Create PRK (Pseudo-Random Key)
-  const authSecret = await crypto.subtle.importKey(
-    'raw',
-    authBytes as BufferSource,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  
-  const ikm = new Uint8Array(await crypto.subtle.sign('HMAC', authSecret, new Uint8Array(sharedSecret)));
-  
-  // Derive encryption key and nonce
-  const info = new TextEncoder().encode('Content-Encoding: aes128gcm\0');
-  const saltKey = await crypto.subtle.importKey(
-    'raw',
-    salt as BufferSource,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  
-  const prk = new Uint8Array(await crypto.subtle.sign('HMAC', saltKey, ikm));
-  
-  // Import PRK for HKDF
-  const prkKey = await crypto.subtle.importKey(
-    'raw',
-    prk as BufferSource,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  
-  // Derive CEK (Content Encryption Key)
-  const cekInfo = new Uint8Array([...info, 1]);
-  const cek = new Uint8Array((await crypto.subtle.sign('HMAC', prkKey, cekInfo)).slice(0, 16));
-  
-  // Derive nonce
-  const nonceInfo = new Uint8Array([...new TextEncoder().encode('Content-Encoding: nonce\0'), 1]);
-  const nonce = new Uint8Array((await crypto.subtle.sign('HMAC', prkKey, nonceInfo)).slice(0, 12));
-  
-  // Import CEK for AES-GCM
-  const cekCryptoKey = await crypto.subtle.importKey(
-    'raw',
-    cek as BufferSource,
-    { name: 'AES-GCM' },
-    false,
-    ['encrypt']
-  );
-  
-  // Add padding
-  const paddingLength = 0;
-  const paddedPayload = new Uint8Array(2 + paddingLength + payloadBytes.length);
-  paddedPayload[0] = paddingLength >> 8;
-  paddedPayload[1] = paddingLength & 0xff;
-  paddedPayload.set(payloadBytes, 2 + paddingLength);
-  
-  // Encrypt
-  const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv: nonce },
-    cekCryptoKey,
-    paddedPayload
-  );
-  
-  return {
-    ciphertext: new Uint8Array(ciphertext),
-    salt,
-    publicKey: localPublicKeyBytes
-  };
-}
 
 async function sendPushToSubscription(subscription: any, payload: PushPayload) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
@@ -224,23 +113,14 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
     const vapidToken = await createVapidAuthToken(endpoint);
     const payloadString = JSON.stringify(payload);
     
-    // Encrypt the payload
-    const { ciphertext, salt, publicKey } = await encryptPayload(
-      payloadString,
-      subscription.keys.p256dh,
-      subscription.keys.auth
-    );
-    
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Authorization': `vapid t=${vapidToken}, k=${VAPID_PUBLIC_KEY}`,
-        'Content-Encoding': 'aes128gcm',
-        'Encryption': `salt=${uint8ArrayToBase64Url(salt)}`,
-        'Crypto-Key': `dh=${uint8ArrayToBase64Url(publicKey)};p256ecdsa=${VAPID_PUBLIC_KEY}`,
+        'Content-Type': 'application/json',
         'TTL': '86400',
       },
-      body: ciphertext as BodyInit,
+      body: payloadString,
     });
 
     if (!response.ok) {
