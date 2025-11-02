@@ -13,20 +13,30 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
   
-  const data = event.data ? event.data.json() : {};
-  console.log('Push event data:', data);
+  let notificationData = {};
   
-  const title = data.title || 'Union Event';
+  try {
+    if (event.data) {
+      notificationData = event.data.json();
+      console.log('Parsed push data:', notificationData);
+    }
+  } catch (error) {
+    console.error('Error parsing push data:', error);
+  }
+  
+  const title = notificationData.title || 'Union Event';
   const options = {
-    body: data.body || 'You have a new notification',
+    body: notificationData.body || 'You have a new notification',
     icon: '/favicon.png',
     badge: '/favicon.png',
-    data: data.url || '/',
-    requireInteraction: false,
+    data: notificationData.url || '/events',
+    requireInteraction: true,
     vibrate: [200, 100, 200],
-    tag: 'union-notification',
+    tag: 'union-event-' + Date.now(),
     renotify: true
   };
+
+  console.log('Showing notification with title:', title, 'and body:', options.body);
 
   event.waitUntil(
     self.registration.showNotification(title, options)
