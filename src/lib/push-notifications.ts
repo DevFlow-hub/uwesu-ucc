@@ -25,7 +25,9 @@ export async function registerServiceWorker() {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/service-worker.js');
+    // Use import.meta.env.BASE_URL to get the correct base path for GitHub Pages
+    const swPath = `${import.meta.env.BASE_URL}service-worker.js`.replace('//', '/');
+    const registration = await navigator.serviceWorker.register(swPath);
     console.log('Service Worker registered:', registration);
     return registration;
   } catch (error) {
