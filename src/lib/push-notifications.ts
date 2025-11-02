@@ -79,6 +79,8 @@ export async function subscribeToPushNotifications() {
           user_id: user.id,
           subscription: subscription.toJSON() as any,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;
