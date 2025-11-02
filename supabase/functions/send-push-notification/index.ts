@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import webpush from "https://esm.sh/web-push@3.6.7";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,88 +23,6 @@ interface SendPushRequest {
   payload: PushPayload;
 }
 
-// Helper to convert base64url to Uint8Array
-function base64UrlToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  
-  for (let i = 0; i < rawData.length; i++) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  
-  return outputArray;
-}
-
-// Helper to convert Uint8Array to base64url
-function uint8ArrayToBase64Url(array: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < array.length; i++) {
-    binary += String.fromCharCode(array[i]);
-  }
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-}
-
-// Create VAPID JWT token
-async function createVapidAuthToken(endpoint: string): Promise<string> {
-  const audience = new URL(endpoint).origin;
-  
-  // JWT Header
-  const header = {
-    typ: 'JWT',
-    alg: 'ES256'
-  };
-  
-  // JWT Payload
-  const payload = {
-    aud: audience,
-    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, // 12 hours
-    sub: VAPID_SUBJECT
-  };
-  
-  const encodedHeader = uint8ArrayToBase64Url(new TextEncoder().encode(JSON.stringify(header)));
-  const encodedPayload = uint8ArrayToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
-  
-  const unsignedToken = `${encodedHeader}.${encodedPayload}`;
-  
-  // Convert VAPID keys to JWK format for crypto.subtle
-  const publicKeyBytes = base64UrlToUint8Array(VAPID_PUBLIC_KEY);
-  const privateKeyBytes = base64UrlToUint8Array(VAPID_PRIVATE_KEY!);
-  
-  const jwk = {
-    kty: 'EC',
-    crv: 'P-256',
-    x: uint8ArrayToBase64Url(publicKeyBytes.slice(1, 33)),
-    y: uint8ArrayToBase64Url(publicKeyBytes.slice(33, 65)),
-    d: uint8ArrayToBase64Url(privateKeyBytes),
-  };
-  
-  const cryptoKey = await crypto.subtle.importKey(
-    'jwk',
-    jwk,
-    { name: 'ECDSA', namedCurve: 'P-256' },
-    false,
-    ['sign']
-  );
-  
-  // Sign the token
-  const signature = await crypto.subtle.sign(
-    { name: 'ECDSA', hash: { name: 'SHA-256' } },
-    cryptoKey,
-    new TextEncoder().encode(unsignedToken)
-  );
-  
-  const encodedSignature = uint8ArrayToBase64Url(new Uint8Array(signature));
-  
-  return `${unsignedToken}.${encodedSignature}`;
-}
 
 async function sendPushToSubscription(subscription: any, payload: PushPayload) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
@@ -111,34 +30,24 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
   }
   
   try {
-    const endpoint = subscription.endpoint;
-    console.log('Sending push notification to:', endpoint);
+    console.log('Sending push notification');
+    console.log('Subscription:', JSON.stringify(subscription));
     console.log('Payload:', JSON.stringify(payload));
     
-    // Create VAPID authorization token
-    const vapidToken = await createVapidAuthToken(endpoint);
+    // Configure web-push with VAPID keys
+    webpush.setVapidDetails(
+      VAPID_SUBJECT,
+      VAPID_PUBLIC_KEY,
+      VAPID_PRIVATE_KEY
+    );
     
-    // Encrypt the payload (simplified - in production you'd use proper encryption)
-    const payloadString = JSON.stringify(payload);
+    // Send notification using web-push library
+    const result = await webpush.sendNotification(
+      subscription,
+      JSON.stringify(payload)
+    );
     
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Authorization': `vapid t=${vapidToken}, k=${VAPID_PUBLIC_KEY}`,
-        'Content-Type': 'application/octet-stream',
-        'Content-Encoding': 'aes128gcm',
-        'TTL': '86400',
-      },
-      body: payloadString,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Push send failed:', response.status, errorText);
-      throw new Error(`Push notification failed: ${response.status} - ${errorText}`);
-    }
-
-    console.log('Push notification sent successfully');
+    console.log('Push notification sent successfully:', result.statusCode);
     return true;
   } catch (error) {
     console.error('Error sending push notification:', error);
