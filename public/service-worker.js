@@ -27,7 +27,7 @@ self.addEventListener('push', (event) => {
     url: '/events'
   };
   
-  // Try to parse the data
+  // Try to parse the data from FCM
   if (event.data) {
     try {
       const text = event.data.text();
@@ -37,10 +37,13 @@ self.addEventListener('push', (event) => {
         const parsed = JSON.parse(text);
         console.log('Successfully parsed notification data:', parsed);
         
+        // FCM wraps the data in a 'data' object
+        const messageData = parsed.data || parsed;
+        
         notificationData = {
-          title: parsed.title || notificationData.title,
-          body: parsed.body || notificationData.body,
-          url: parsed.url || notificationData.url
+          title: messageData.title || notificationData.title,
+          body: messageData.body || notificationData.body,
+          url: messageData.url || notificationData.url
         };
       } else {
         console.warn('Push data text is empty');
