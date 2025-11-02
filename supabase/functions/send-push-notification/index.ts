@@ -100,6 +100,121 @@ async function createVapidAuthToken(endpoint: string): Promise<string> {
 }
 
 
+// Encrypt payload for web push using aes128gcm
+async function encryptPayload(
+  payload: string,
+  p256dh: string,
+  auth: string
+): Promise<{ ciphertext: Uint8Array; salt: Uint8Array; publicKey: Uint8Array }> {
+  // Generate ephemeral key pair
+  const ephemeralKey = await crypto.subtle.generateKey(
+    { name: 'ECDH', namedCurve: 'P-256' },
+    true,
+    ['deriveBits']
+  );
+  
+  // Import user's public key
+  const p256dhBytes = base64UrlToUint8Array(p256dh);
+  const userPublicKey = await crypto.subtle.importKey(
+    'raw',
+    p256dhBytes.buffer as ArrayBuffer,
+    { name: 'ECDH', namedCurve: 'P-256' },
+    false,
+    []
+  );
+  
+  // Derive shared secret
+  const sharedSecret = await crypto.subtle.deriveBits(
+    { name: 'ECDH', public: userPublicKey },
+    ephemeralKey.privateKey,
+    256
+  );
+  
+  // Import auth secret
+  const authSecret = base64UrlToUint8Array(auth);
+  
+  // Generate salt
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  
+  // Derive PRK
+  const prkInfoBuf = new TextEncoder().encode('WebPush: info\x00');
+  const prkInfo = new Uint8Array(prkInfoBuf.length + authSecret.length + new Uint8Array(sharedSecret).length);
+  prkInfo.set(prkInfoBuf);
+  prkInfo.set(authSecret, prkInfoBuf.length);
+  prkInfo.set(new Uint8Array(sharedSecret), prkInfoBuf.length + authSecret.length);
+  
+  const importedAuth = await crypto.subtle.importKey(
+    'raw',
+    authSecret.buffer as ArrayBuffer,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const prk = await crypto.subtle.sign(
+    'HMAC',
+    importedAuth,
+    new Uint8Array(sharedSecret)
+  );
+  
+  // Derive content encryption key
+  const cekInfo = new TextEncoder().encode('Content-Encoding: aes128gcm\x00');
+  const cekHkdf = new Uint8Array(cekInfo.length + 1);
+  cekHkdf.set(cekInfo);
+  cekHkdf[cekInfo.length] = 1;
+  
+  const importedPrk = await crypto.subtle.importKey(
+    'raw',
+    new Uint8Array(prk),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const cek = await crypto.subtle.sign('HMAC', importedPrk, cekHkdf);
+  const contentEncryptionKey = new Uint8Array(cek).slice(0, 16);
+  
+  // Derive nonce
+  const nonceInfo = new TextEncoder().encode('Content-Encoding: nonce\x00');
+  const nonceHkdf = new Uint8Array(nonceInfo.length + 1);
+  nonceHkdf.set(nonceInfo);
+  nonceHkdf[nonceInfo.length] = 1;
+  
+  const nonceKey = await crypto.subtle.sign('HMAC', importedPrk, nonceHkdf);
+  const nonce = new Uint8Array(nonceKey).slice(0, 12);
+  
+  // Prepare plaintext with padding
+  const paddingLength = 0;
+  const plaintext = new Uint8Array(2 + paddingLength + new TextEncoder().encode(payload).length);
+  const view = new DataView(plaintext.buffer);
+  view.setUint16(0, paddingLength, false);
+  plaintext.set(new TextEncoder().encode(payload), 2 + paddingLength);
+  
+  // Encrypt
+  const importedKey = await crypto.subtle.importKey(
+    'raw',
+    contentEncryptionKey,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt']
+  );
+  
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: nonce },
+    importedKey,
+    plaintext
+  );
+  
+  // Export ephemeral public key
+  const rawPublicKey = await crypto.subtle.exportKey('raw', ephemeralKey.publicKey);
+  
+  return {
+    ciphertext: new Uint8Array(ciphertext),
+    salt,
+    publicKey: new Uint8Array(rawPublicKey)
+  };
+}
+
 async function sendPushToSubscription(subscription: any, payload: PushPayload) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     throw new Error('VAPID keys not configured');
@@ -112,10 +227,37 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
     
     const vapidToken = await createVapidAuthToken(endpoint);
     
-    // Encode the payload as base64 to ensure it's transmitted correctly
+    // Encrypt the payload
     const payloadString = JSON.stringify(payload);
-    const encoder = new TextEncoder();
-    const data = encoder.encode(payloadString);
+    const { ciphertext, salt, publicKey } = await encryptPayload(
+      payloadString,
+      subscription.keys.p256dh,
+      subscription.keys.auth
+    );
+    
+    // Construct the body with salt and public key
+    const body = new Uint8Array(salt.length + 4 + 1 + publicKey.length + ciphertext.length);
+    let offset = 0;
+    
+    // Add salt
+    body.set(salt, offset);
+    offset += salt.length;
+    
+    // Add record size (4096)
+    const recordSize = new DataView(body.buffer);
+    recordSize.setUint32(offset, 4096, false);
+    offset += 4;
+    
+    // Add public key length
+    body[offset] = publicKey.length;
+    offset += 1;
+    
+    // Add public key
+    body.set(publicKey, offset);
+    offset += publicKey.length;
+    
+    // Add ciphertext
+    body.set(ciphertext, offset);
     
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -125,7 +267,7 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
         'Content-Encoding': 'aes128gcm',
         'TTL': '86400',
       },
-      body: data,
+      body,
     });
 
     if (!response.ok) {
