@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -101,25 +100,6 @@ async function createVapidAuthToken(endpoint: string): Promise<string> {
 }
 
 
-// Simple encryption using web-push-encryption standard
-async function encryptPayload(
-  payload: string,
-  p256dh: string,
-  auth: string
-): Promise<{ body: Uint8Array; headers: Record<string, string> }> {
-  const payloadBuffer = new TextEncoder().encode(payload);
-  
-  // For now, send unencrypted for debugging - FCM will handle encryption
-  // This is a temporary solution to identify if encryption is the issue
-  return {
-    body: payloadBuffer,
-    headers: {
-      'Content-Encoding': 'aesgcm',
-      'Encryption': `salt=${auth}`,
-      'Crypto-Key': `dh=${p256dh}`
-    }
-  };
-}
 
 async function sendPushToSubscription(subscription: any, payload: PushPayload) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
@@ -133,13 +113,17 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
     
     const vapidToken = await createVapidAuthToken(endpoint);
     
-    // Encrypt the payload
-    const payloadString = JSON.stringify(payload);
-    const { body, headers: encryptionHeaders } = await encryptPayload(
-      payloadString,
-      subscription.keys.p256dh,
-      subscription.keys.auth
-    );
+    // FCM expects the payload in a specific format
+    const fcmPayload = {
+      notification: {
+        title: payload.title,
+        body: payload.body,
+      },
+      data: {
+        url: payload.url || '/events'
+      }
+    };
+    
     
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -148,7 +132,7 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
         'Content-Type': 'application/json',
         'TTL': '86400',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(fcmPayload),
     });
 
     if (!response.ok) {
