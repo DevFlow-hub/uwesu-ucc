@@ -113,11 +113,15 @@ async function sendPushToSubscription(subscription: any, payload: PushPayload) {
     
     const vapidToken = await createVapidAuthToken(endpoint);
     
-    // FCM data messages require all values to be strings
+    // Send both notification and data to ensure delivery on all platforms
+    // The notification field ensures it displays even when app is in background
+    // The data field allows service worker to customize when needed
     const fcmPayload = {
+      notification: {
+        title: payload.title,
+        body: payload.body
+      },
       data: {
-        title: String(payload.title),
-        body: String(payload.body),
         url: String(payload.url || '/events')
       }
     };

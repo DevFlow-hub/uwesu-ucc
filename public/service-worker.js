@@ -13,14 +13,6 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('push', (event) => {
   console.log('=== PUSH EVENT RECEIVED ===');
-  console.log('Event:', event);
-  console.log('Event.data exists:', !!event.data);
-  
-  if (event.data) {
-    console.log('Event.data type:', typeof event.data);
-    const text = event.data.text();
-    console.log('Raw data as text:', text);
-  }
   
   let notificationData = {
     title: 'Union Event',
@@ -28,33 +20,23 @@ self.addEventListener('push', (event) => {
     url: '/events'
   };
   
-  // Try to parse the data from FCM
+  // Parse FCM notification data
   if (event.data) {
     try {
-      const text = event.data.text();
-      console.log('Raw push data text:', text);
+      const data = event.data.json();
+      console.log('Received push data:', data);
       
-      if (text) {
-        const parsed = JSON.parse(text);
-        console.log('Successfully parsed notification data:', parsed);
-        
-        // FCM wraps the data in a 'data' object
-        const messageData = parsed.data || parsed;
-        
-        notificationData = {
-          title: messageData.title || notificationData.title,
-          body: messageData.body || notificationData.body,
-          url: messageData.url || notificationData.url
-        };
-      } else {
-        console.warn('Push data text is empty');
+      // FCM sends: { notification: { title, body }, data: { url } }
+      if (data.notification) {
+        notificationData.title = data.notification.title;
+        notificationData.body = data.notification.body;
+      }
+      if (data.data && data.data.url) {
+        notificationData.url = data.data.url;
       }
     } catch (error) {
       console.error('Error parsing push data:', error);
-      console.error('Error stack:', error.stack);
     }
-  } else {
-    console.warn('No event.data in push event');
   }
   
   const options = {
@@ -68,10 +50,7 @@ self.addEventListener('push', (event) => {
     renotify: true
   };
 
-  console.log('=== SHOWING NOTIFICATION ===');
-  console.log('Title:', notificationData.title);
-  console.log('Body:', notificationData.body);
-  console.log('Options:', options);
+  console.log('Showing notification:', notificationData.title, notificationData.body);
 
   event.waitUntil(
     self.registration.showNotification(notificationData.title, options)
