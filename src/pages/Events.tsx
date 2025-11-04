@@ -141,7 +141,7 @@ const Events = () => {
     const dateStr = format(eventDate, "MMMM d, yyyy");
     const timeStr = format(eventDate, "h:mm a");
 
-    return `📅 UNION EVENT (UWESU-UCC)
+    return `UWESU-UCC
 
 ${event.title}
 
