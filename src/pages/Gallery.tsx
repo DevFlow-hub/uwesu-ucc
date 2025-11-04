@@ -242,7 +242,7 @@ const Gallery = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handleDownload(image.image_url, image.title)}
-                    className="flex-1"
+                    className="flex-1 animate-pulse-glow"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download
