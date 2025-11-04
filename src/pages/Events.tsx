@@ -273,6 +273,7 @@ ${event.title}
                               setSelectedEventForNotification(event);
                               setNotificationChannel("whatsapp");
                             }}
+                            className="animate-pulse-glow"
                           >
                             <MessageSquare className="mr-2 h-4 w-4" />
                             Notify

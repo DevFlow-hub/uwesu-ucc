@@ -10,9 +10,6 @@ const Footer = () => {
               <Users className="h-6 w-6" />
               <span className="text-xl font-bold">UPPER WEST STUDENTS UNION</span>
             </div>
-            <p className="text-primary-foreground/80 text-sm">
-              Unity In Diversity
-            </p>
           </div>
           
           <div>
