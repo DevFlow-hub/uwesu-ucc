@@ -10,6 +10,7 @@ import Events from "./pages/Events";
 import Comments from "./pages/Comments";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import { LogoutHelper } from "./components/LogoutHelper";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/events" element={<Events />} />
           <Route path="/comments" element={<Comments />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/logout" element={<LogoutHelper />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

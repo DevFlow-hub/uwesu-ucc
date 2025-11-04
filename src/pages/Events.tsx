@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Trash2, Bell } from "lucide-react";
+import { Calendar, MapPin, Clock, Trash2, MessageSquare, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import EventCountdown from "@/components/EventCountdown";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ import {
 const Events = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+  const [selectedEventForWhatsApp, setSelectedEventForWhatsApp] = useState<any | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -100,24 +101,50 @@ const Events = () => {
     }
   };
 
-  const sendReminderMutation = useMutation({
-    mutationFn: async (eventId: string) => {
-      const { data, error } = await supabase.functions.invoke('send-event-reminder', {
-        body: { eventId, method: 'push' },
-      });
+  const { data: members } = useQuery({
+    queryKey: ["members-with-whatsapp"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, whatsapp_number, country_code")
+        .not("whatsapp_number", "is", null)
+        .order("full_name");
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      toast.success('Push notifications sent to all members');
-    },
-    onError: () => {
-      toast.error("Failed to send reminders");
-    },
+    enabled: isAdmin,
   });
 
-  const handleSendReminder = (eventId: string) => {
-    sendReminderMutation.mutate(eventId);
+  const generateWhatsAppMessage = (event: any) => {
+    if (!event) return "";
+    
+    const eventDate = new Date(event.event_date);
+    const dateStr = eventDate.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const timeStr = eventDate.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit' 
+    });
+
+    return `📅 UNION EVENT
+
+${event.title}
+${dateStr} • ${timeStr}
+${event.venue || 'Venue TBA'}
+
+${event.description || 'Event details coming soon.'}`;
+  };
+
+  const openWhatsApp = (whatsappNumber: string, countryCode: string, event: any) => {
+    const message = generateWhatsAppMessage(event);
+    const cleanNumber = whatsappNumber.replace(/\D/g, '');
+    const fullNumber = `${countryCode}${cleanNumber}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${fullNumber}?text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank');
   };
 
   return (
@@ -152,10 +179,10 @@ const Events = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleSendReminder(event.id)}
+                            onClick={() => setSelectedEventForWhatsApp(event)}
                           >
-                            <Bell className="mr-2 h-4 w-4" />
-                            Send Push Reminder
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Send WhatsApp
                           </Button>
                           <Button
                             variant="ghost"
@@ -238,6 +265,67 @@ const Events = () => {
             <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!selectedEventForWhatsApp} onOpenChange={() => setSelectedEventForWhatsApp(null)}>
+        <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send WhatsApp Notifications</AlertDialogTitle>
+            <AlertDialogDescription>
+              Click "Send WhatsApp" for each member to open WhatsApp with a pre-filled message about this event.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {selectedEventForWhatsApp && (
+            <div className="space-y-4">
+              <Card className="bg-muted/50">
+                <CardHeader>
+                  <CardTitle className="text-base">Message Preview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="text-sm whitespace-pre-wrap font-sans">
+                    {generateWhatsAppMessage(selectedEventForWhatsApp)}
+                  </pre>
+                </CardContent>
+              </Card>
+
+              <div className="space-y-2">
+                <h3 className="font-semibold">Members ({members?.length || 0})</h3>
+                {members && members.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {members.map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg bg-background">
+                        <div>
+                          <p className="font-medium text-sm">{member.full_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {member.country_code} {member.whatsapp_number}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => openWhatsApp(member.whatsapp_number!, member.country_code!, selectedEventForWhatsApp)}
+                          variant="default"
+                          size="sm"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Send WhatsApp
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4 text-sm">
+                    No members with WhatsApp numbers yet
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel>Close</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
