@@ -4,8 +4,9 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Trash2, MessageSquare, ExternalLink } from "lucide-react";
+import { Calendar, MapPin, Clock, Trash2, MessageSquare, ExternalLink, Mail, Send } from "lucide-react";
 import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EventCountdown from "@/components/EventCountdown";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
@@ -23,7 +24,9 @@ import {
 const Events = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
-  const [selectedEventForWhatsApp, setSelectedEventForWhatsApp] = useState<any | null>(null);
+  const [selectedEventForNotification, setSelectedEventForNotification] = useState<any | null>(null);
+  const [notificationChannel, setNotificationChannel] = useState<"whatsapp" | "email">("whatsapp");
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -101,7 +104,7 @@ const Events = () => {
     }
   };
 
-  const { data: members } = useQuery({
+  const { data: whatsappMembers } = useQuery({
     queryKey: ["members-with-whatsapp"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -114,6 +117,22 @@ const Events = () => {
     },
     enabled: isAdmin,
   });
+
+  const { data: emailMembers } = useQuery({
+    queryKey: ["members-with-email"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .not("email", "is", null)
+        .order("full_name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin,
+  });
+
+  const members = notificationChannel === "whatsapp" ? whatsappMembers : emailMembers;
 
   const generateWhatsAppMessage = (event: any) => {
     if (!event) return "";
@@ -140,6 +159,68 @@ ${event.title}
     const whatsappUrl = `https://wa.me/${fullNumber}?text=${encodedMessage}`;
     
     window.open(whatsappUrl, '_blank');
+    toast.success("Opening WhatsApp...");
+  };
+
+  const sendEventEmail = async (email: string, memberName: string, event: any) => {
+    setSendingEmail(email);
+    try {
+      const eventDate = new Date(event.event_date);
+      const dateStr = format(eventDate, "MMMM d, yyyy");
+      const timeStr = format(eventDate, "h:mm a");
+
+      const { error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: email,
+          subject: `📅 Upcoming Event: ${event.title} - UWESU-UCC`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">UWESU-UCC Union</h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Event Notification</p>
+              </div>
+              
+              <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h2 style="color: #333; margin-top: 0;">${event.title}</h2>
+                
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <p style="margin: 10px 0; color: #555;">
+                    <strong style="color: #667eea;">📅 Date:</strong> ${dateStr}
+                  </p>
+                  <p style="margin: 10px 0; color: #555;">
+                    <strong style="color: #667eea;">⏰ Time:</strong> ${timeStr}
+                  </p>
+                  <p style="margin: 10px 0; color: #555;">
+                    <strong style="color: #667eea;">📍 Venue:</strong> ${event.venue || 'Venue TBA'}
+                  </p>
+                </div>
+                
+                ${event.description ? `
+                  <div style="margin: 20px 0;">
+                    <h3 style="color: #333; font-size: 16px;">Event Details:</h3>
+                    <p style="color: #555; line-height: 1.6;">${event.description}</p>
+                  </div>
+                ` : ''}
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                  <p style="color: #666; font-size: 12px; margin: 0;">
+                    This event notification was sent from UWESU-UCC Union Administration
+                  </p>
+                </div>
+              </div>
+            </div>
+          `,
+        },
+      });
+
+      if (error) throw error;
+      toast.success(`Email sent to ${memberName}`);
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast.error(`Failed to send email to ${memberName}`);
+    } finally {
+      setSendingEmail(null);
+    }
   };
 
   return (
@@ -174,10 +255,13 @@ ${event.title}
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedEventForWhatsApp(event)}
+                            onClick={() => {
+                              setSelectedEventForNotification(event);
+                              setNotificationChannel("whatsapp");
+                            }}
                           >
                             <MessageSquare className="mr-2 h-4 w-4" />
-                            Send WhatsApp
+                            Notify
                           </Button>
                           <Button
                             variant="ghost"
@@ -264,25 +348,53 @@ ${event.title}
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!selectedEventForWhatsApp} onOpenChange={() => setSelectedEventForWhatsApp(null)}>
+      <AlertDialog open={!!selectedEventForNotification} onOpenChange={() => setSelectedEventForNotification(null)}>
         <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle>Send WhatsApp Notifications</AlertDialogTitle>
+            <AlertDialogTitle>Send Event Notifications</AlertDialogTitle>
             <AlertDialogDescription>
-              Click "Send WhatsApp" for each member to open WhatsApp with a pre-filled message about this event.
+              Choose a channel and send notifications to members about this event
             </AlertDialogDescription>
           </AlertDialogHeader>
           
-          {selectedEventForWhatsApp && (
+          {selectedEventForNotification && (
             <div className="space-y-4">
+              <Tabs value={notificationChannel} onValueChange={(v) => setNotificationChannel(v as "whatsapp" | "email")}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="whatsapp" className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    WhatsApp
+                  </TabsTrigger>
+                  <TabsTrigger value="email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
               <Card className="bg-muted/50">
                 <CardHeader>
-                  <CardTitle className="text-base">Message Preview</CardTitle>
+                  <CardTitle className="text-base">
+                    {notificationChannel === "whatsapp" ? "WhatsApp Message" : "Email"} Preview
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <pre className="text-sm whitespace-pre-wrap font-sans">
-                    {generateWhatsAppMessage(selectedEventForWhatsApp)}
-                  </pre>
+                  {notificationChannel === "whatsapp" ? (
+                    <pre className="text-sm whitespace-pre-wrap font-sans">
+                      {generateWhatsAppMessage(selectedEventForNotification)}
+                    </pre>
+                  ) : (
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground font-semibold">Subject:</p>
+                        <p className="text-sm font-medium">📅 Upcoming Event: {selectedEventForNotification.title} - UWESU-UCC</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground font-semibold">Preview:</p>
+                        <p className="text-sm">Professional HTML email with event details, date, time, and venue</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -295,24 +407,40 @@ ${event.title}
                         <div>
                           <p className="font-medium text-sm">{member.full_name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {member.country_code} {member.whatsapp_number}
+                            {notificationChannel === "whatsapp"
+                              ? `${(member as any).country_code} ${(member as any).whatsapp_number}`
+                              : (member as any).email}
                           </p>
                         </div>
-                        <Button
-                          onClick={() => openWhatsApp(member.whatsapp_number!, member.country_code!, selectedEventForWhatsApp)}
-                          variant="default"
-                          size="sm"
-                        >
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Send WhatsApp
-                          <ExternalLink className="h-3 w-3 ml-1" />
-                        </Button>
+                        {notificationChannel === "whatsapp" ? (
+                          <Button
+                            onClick={() => openWhatsApp((member as any).whatsapp_number!, (member as any).country_code!, selectedEventForNotification)}
+                            variant="default"
+                            size="sm"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Send WhatsApp
+                            <ExternalLink className="h-3 w-3 ml-1" />
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => sendEventEmail((member as any).email!, member.full_name, selectedEventForNotification)}
+                            variant="default"
+                            size="sm"
+                            disabled={sendingEmail === (member as any).email}
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            {sendingEmail === (member as any).email ? "Sending..." : "Send Email"}
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
                 ) : (
                   <p className="text-center text-muted-foreground py-4 text-sm">
-                    No members with WhatsApp numbers yet
+                    {notificationChannel === "whatsapp"
+                      ? "No members with WhatsApp numbers yet"
+                      : "No members with email addresses yet"}
                   </p>
                 )}
               </div>
