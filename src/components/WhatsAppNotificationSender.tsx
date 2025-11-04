@@ -6,6 +6,7 @@ import { MessageSquare, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 
 export const WhatsAppNotificationSender = () => {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
@@ -41,15 +42,8 @@ export const WhatsAppNotificationSender = () => {
     if (!selectedEvent) return "";
     
     const eventDate = new Date(selectedEvent.event_date);
-    const dateStr = eventDate.toLocaleDateString('en-US', { 
-      month: 'long', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-    const timeStr = eventDate.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit' 
-    });
+    const dateStr = format(eventDate, "MMMM d, yyyy");
+    const timeStr = format(eventDate, "h:mm a");
 
     return `📅 UNION EVENT (UWESU-UCC)
 

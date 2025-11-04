@@ -119,15 +119,8 @@ const Events = () => {
     if (!event) return "";
     
     const eventDate = new Date(event.event_date);
-    const dateStr = eventDate.toLocaleDateString('en-US', { 
-      month: 'long', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-    const timeStr = eventDate.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit' 
-    });
+    const dateStr = format(eventDate, "MMMM d, yyyy");
+    const timeStr = format(eventDate, "h:mm a");
 
     return `📅 UNION EVENT (UWESU-UCC)
 
