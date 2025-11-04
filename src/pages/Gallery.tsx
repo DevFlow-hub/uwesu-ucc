@@ -227,7 +227,7 @@ const Gallery = () => {
                 <img
                   src={image.image_url}
                   alt={image.title}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="lazy"
                   decoding="async"
                 />

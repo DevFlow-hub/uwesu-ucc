@@ -245,7 +245,7 @@ ${event.title}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4 gradient-text">Union Events</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Stay updated with our upcoming meetings, elections, and activities
+            Stay updated with our upcoming meetings and activities
           </p>
         </div>
 
