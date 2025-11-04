@@ -24,7 +24,7 @@ export const WhatsAppNotificationSender = () => {
     },
   });
 
-  const openWhatsApp = (whatsappNumber: string, countryCode: string) => {
+  const openWhatsApp = (whatsappNumber: string, countryCode: string, memberName: string) => {
     if (!message.trim()) {
       toast.error("Please enter a message first");
       return;
@@ -37,6 +37,7 @@ export const WhatsAppNotificationSender = () => {
     const whatsappUrl = `https://wa.me/${fullNumber}?text=${encodedMessage}`;
     
     window.open(whatsappUrl, '_blank');
+    toast.success(`Opening WhatsApp for ${memberName}`);
   };
 
   return (
@@ -102,7 +103,7 @@ export const WhatsAppNotificationSender = () => {
                       </p>
                     </div>
                     <Button
-                      onClick={() => openWhatsApp(member.whatsapp_number!, member.country_code!)}
+                      onClick={() => openWhatsApp(member.whatsapp_number!, member.country_code!, member.full_name)}
                       variant="default"
                       size="sm"
                     >

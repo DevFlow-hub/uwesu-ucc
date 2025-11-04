@@ -434,29 +434,27 @@ const Admin = () => {
           <p className="text-muted-foreground">Manage union content and settings</p>
         </div>
 
-        <Tabs defaultValue="events" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 max-w-4xl">
-            <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="executives">Executives</TabsTrigger>
-            <TabsTrigger value="gallery">Gallery</TabsTrigger>
-            <TabsTrigger value="notifications">Alerts</TabsTrigger>
-          </TabsList>
-          
-          <div className="mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                const infoTab = document.querySelector('[value="info"]') as HTMLButtonElement;
-                infoTab?.click();
-              }}
-              className="w-full sm:w-auto"
-            >
+        <Tabs defaultValue="events" className="space-y-8">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto p-1 bg-muted/50 rounded-xl">
+            <TabsTrigger value="events" className="data-[state=active]:bg-background data-[state=active]:shadow-md">
+              Events
+            </TabsTrigger>
+            <TabsTrigger value="executives" className="data-[state=active]:bg-background data-[state=active]:shadow-md">
+              Executives
+            </TabsTrigger>
+            <TabsTrigger value="gallery" className="data-[state=active]:bg-background data-[state=active]:shadow-md">
+              Gallery
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="data-[state=active]:bg-background data-[state=active]:shadow-md">
+              Alerts
+            </TabsTrigger>
+            <TabsTrigger value="info" className="data-[state=active]:bg-background data-[state=active]:shadow-md">
               Union Info
-            </Button>
-          </div>
+            </TabsTrigger>
+          </TabsList>
 
-          <TabsContent value="events" className="space-y-6">
-            <Card>
+          <TabsContent value="events" className="space-y-6 pt-2">
+            <Card className="border-2">
               <CardHeader>
                 <CardTitle>Create New Event</CardTitle>
                 <CardDescription>Add upcoming events for members</CardDescription>
@@ -485,9 +483,9 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="executives" className="space-y-6">
+          <TabsContent value="executives" className="space-y-6 pt-2">
             <div className="grid gap-6">
-              <Card>
+              <Card className="border-2">
                 <CardHeader>
                   <CardTitle>Add Executive</CardTitle>
                   <CardDescription>Create portfolio positions and add executive details</CardDescription>
@@ -533,7 +531,7 @@ const Admin = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-2">
                 <CardHeader>
                   <CardTitle>Current Executives</CardTitle>
                   <CardDescription>Manage existing executive profiles</CardDescription>
@@ -573,9 +571,9 @@ const Admin = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="gallery" className="space-y-6">
+          <TabsContent value="gallery" className="space-y-6 pt-2">
             <div className="grid gap-6">
-              <Card>
+              <Card className="border-2">
                 <CardHeader>
                   <CardTitle>Create Category</CardTitle>
                   <CardDescription>Add new gallery categories</CardDescription>
@@ -595,7 +593,7 @@ const Admin = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-2">
                 <CardHeader>
                   <CardTitle>Manage Categories</CardTitle>
                   <CardDescription>View and delete existing categories</CardDescription>
@@ -632,7 +630,7 @@ const Admin = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-2">
                 <CardHeader>
                   <CardTitle>Upload Image</CardTitle>
                   <CardDescription>Add new images to the gallery</CardDescription>
@@ -683,10 +681,12 @@ const Admin = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="notifications" className="space-y-6">
-            <WhatsAppNotificationSender />
+          <TabsContent value="notifications" className="space-y-6 pt-2">
+            <div className="p-6 rounded-xl bg-gradient-to-br from-primary/5 via-background to-background border-2 border-primary/20">
+              <WhatsAppNotificationSender />
+            </div>
             
-            <Card>
+            <Card className="border-2">
               <CardHeader>
                 <CardTitle>User Activity Notifications</CardTitle>
                 <CardDescription>Recent user signups and logins</CardDescription>
@@ -697,9 +697,9 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="info" className="space-y-6">
+          <TabsContent value="info" className="space-y-6 pt-2">
             <div className="grid gap-6">
-              <Card>
+              <Card className="border-2">
                 <CardHeader>
                   <CardTitle>Member Statistics</CardTitle>
                   <CardDescription>Update total member count and view active members</CardDescription>
