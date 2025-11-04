@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
-import { UserPlus, LogIn, Bell, Shield, ShieldOff } from "lucide-react";
+import { UserPlus, LogIn, Bell, Shield, ShieldOff, Ban, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,6 +15,11 @@ interface Notification {
   user_name: string | null;
   event_type: "signup" | "login";
   created_at: string;
+}
+
+interface UserProfile {
+  user_id: string;
+  blocked: boolean;
 }
 
 const UserActivityNotifications = () => {
@@ -47,6 +52,19 @@ const UserActivityNotifications = () => {
 
       if (error) throw error;
       return new Set(data.map((r) => r.user_id));
+    },
+  });
+
+  const { data: blockedUsers } = useQuery({
+    queryKey: ["blocked-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, blocked")
+        .eq("blocked", true);
+
+      if (error) throw error;
+      return new Set(data.map((u) => u.user_id));
     },
   });
 
@@ -94,6 +112,50 @@ const UserActivityNotifications = () => {
     },
   });
 
+  const blockUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ blocked: true })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blocked-users"] });
+      toast({ title: "User blocked successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to block user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const unblockUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ blocked: false })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blocked-users"] });
+      toast({ title: "User unblocked successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to unblock user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   if (isLoading) {
     return <div className="text-center py-8 text-muted-foreground">Loading notifications...</div>;
   }
@@ -109,6 +171,7 @@ const UserActivityNotifications = () => {
 
   const displayedNotifications = showAll ? notifications : notifications.slice(0, 10);
   const isUserAdmin = (userId: string) => adminRoles?.has(userId);
+  const isUserBlocked = (userId: string) => blockedUsers?.has(userId);
 
   return (
     <div>
@@ -116,6 +179,7 @@ const UserActivityNotifications = () => {
         <div className="space-y-3">
           {displayedNotifications.map((notification) => {
             const isAdmin = isUserAdmin(notification.user_id);
+            const isBlocked = isUserBlocked(notification.user_id);
             
             return (
               <div
@@ -146,6 +210,12 @@ const UserActivityNotifications = () => {
                       <Badge variant="outline" className="text-xs">
                         <Shield className="h-3 w-3 mr-1" />
                         Admin
+                      </Badge>
+                    )}
+                    {isBlocked && (
+                      <Badge variant="destructive" className="text-xs">
+                        <Ban className="h-3 w-3 mr-1" />
+                        Blocked
                       </Badge>
                     )}
                   </div>
@@ -179,6 +249,30 @@ const UserActivityNotifications = () => {
                     >
                       <Shield className="h-4 w-4 sm:mr-1" />
                       <span className="hidden sm:inline">Make Admin</span>
+                    </Button>
+                  )}
+                  
+                  {isBlocked ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => unblockUserMutation.mutate(notification.user_id)}
+                      disabled={unblockUserMutation.isPending}
+                      className="flex-1 sm:flex-none"
+                    >
+                      <CheckCircle className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Unblock</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => blockUserMutation.mutate(notification.user_id)}
+                      disabled={blockUserMutation.isPending}
+                      className="flex-1 sm:flex-none"
+                    >
+                      <Ban className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Block</span>
                     </Button>
                   )}
                 </div>

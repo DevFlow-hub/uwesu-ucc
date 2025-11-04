@@ -11,6 +11,7 @@ import Comments from "./pages/Comments";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { LogoutHelper } from "./components/LogoutHelper";
+import BlockedUserCheck from "./components/BlockedUserCheck";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <HashRouter>
+        <BlockedUserCheck />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />

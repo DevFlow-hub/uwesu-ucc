@@ -185,6 +185,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          blocked: boolean
           country_code: string | null
           created_at: string | null
           designation: string | null
@@ -201,6 +202,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          blocked?: boolean
           country_code?: string | null
           created_at?: string | null
           designation?: string | null
@@ -217,6 +219,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          blocked?: boolean
           country_code?: string | null
           created_at?: string | null
           designation?: string | null
@@ -331,6 +334,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_user_blocked: { Args: { _user_id: string }; Returns: boolean }
       update_active_members_count: { Args: never; Returns: undefined }
     }
     Enums: {
