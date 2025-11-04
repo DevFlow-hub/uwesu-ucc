@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import UserActivityNotifications from "@/components/UserActivityNotifications";
-import { NotificationSender } from "@/components/NotificationSender";
+import { WhatsAppNotificationSender } from "@/components/WhatsAppNotificationSender";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { RealtimeNotifications } from "@/components/RealtimeNotifications";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -684,7 +684,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-6">
-            <NotificationSender />
+            <WhatsAppNotificationSender />
             
             <Card>
               <CardHeader>

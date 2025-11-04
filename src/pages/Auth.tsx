@@ -8,14 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { authSchema } from "@/lib/validation-schemas";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { z } from "zod";
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -40,24 +43,19 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Validate inputs
-      const validationData = isLogin 
-        ? { email, password }
-        : { email, password, fullName };
-      
-      const validated = authSchema.parse(validationData);
+      if (!isLogin && !whatsappNumber) {
+        throw new Error("Please enter your WhatsApp number");
+      }
 
       if (isLogin) {
         const { error, data } = await supabase.auth.signInWithPassword({
-          email: validated.email,
-          password: validated.password,
+          email,
+          password,
         });
 
         if (error) throw error;
 
-        // Login event now logged automatically via database trigger
         if (data.user) {
-          // Set flag for notification prompt
           sessionStorage.setItem('just-logged-in', 'true');
           window.dispatchEvent(new Event('user-logged-in'));
         }
@@ -68,12 +66,20 @@ const Auth = () => {
         });
         navigate("/");
       } else {
-        const { error } = await supabase.auth.signUp({
-          email: validated.email,
-          password: validated.password,
+        // Extract country code and number from WhatsApp input
+        const phoneMatch = whatsappNumber.match(/^\+(\d{1,3})(\d+)$/);
+        if (!phoneMatch) {
+          throw new Error("Invalid WhatsApp number format");
+        }
+        const countryCode = `+${phoneMatch[1]}`;
+        const number = phoneMatch[2];
+
+        const { error, data } = await supabase.auth.signUp({
+          email,
+          password,
           options: {
             data: {
-              full_name: validated.fullName,
+              full_name: fullName,
             },
             emailRedirectTo: `${window.location.origin}/`,
           },
@@ -81,7 +87,19 @@ const Auth = () => {
 
         if (error) throw error;
 
-        // Set flag for notification prompt and dispatch event
+        // Update profile with WhatsApp number
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              whatsapp_number: number,
+              country_code: countryCode,
+            })
+            .eq('user_id', data.user.id);
+
+          if (profileError) console.error('Profile update error:', profileError);
+        }
+
         sessionStorage.setItem('just-logged-in', 'true');
         window.dispatchEvent(new Event('user-logged-in'));
 
@@ -92,19 +110,11 @@ const Auth = () => {
         navigate("/");
       }
     } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        toast({
-          title: "Validation Error",
-          description: error.errors[0].message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -242,17 +252,34 @@ const Auth = () => {
             ) : (
               <form onSubmit={handleAuth} className="space-y-4">
               {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                    <PhoneInput
+                      international
+                      defaultCountry="US"
+                      value={whatsappNumber}
+                      onChange={(value) => setWhatsappNumber(value || "")}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      We'll send event reminders via WhatsApp. Your number will only be used for union communications.
+                    </p>
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">

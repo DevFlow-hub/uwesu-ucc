@@ -185,6 +185,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          country_code: string | null
           created_at: string | null
           designation: string | null
           email: string
@@ -195,10 +196,12 @@ export type Database = {
           phone: string | null
           updated_at: string | null
           user_id: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          country_code?: string | null
           created_at?: string | null
           designation?: string | null
           email: string
@@ -209,10 +212,12 @@ export type Database = {
           phone?: string | null
           updated_at?: string | null
           user_id?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          country_code?: string | null
           created_at?: string | null
           designation?: string | null
           email?: string
@@ -223,6 +228,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string | null
           user_id?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
@@ -325,10 +331,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_active_members_count: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      update_active_members_count: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
