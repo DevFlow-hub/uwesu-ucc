@@ -12,6 +12,7 @@ import 'react-phone-number-input/style.css';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
@@ -33,22 +34,9 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (!whatsappNumber) {
-        throw new Error("Please enter your WhatsApp number");
-      }
-
-      // Extract country code and number from WhatsApp input
-      const phoneMatch = whatsappNumber.match(/^\+(\d{1,3})(\d+)$/);
-      if (!phoneMatch) {
-        throw new Error("Invalid WhatsApp number format");
-      }
-      const countryCode = `+${phoneMatch[1]}`;
-      const number = phoneMatch[2];
-      const fullPhone = whatsappNumber;
-
       if (isLogin) {
         const { error, data } = await supabase.auth.signInWithPassword({
-          phone: fullPhone,
+          email,
           password,
         });
 
@@ -65,8 +53,20 @@ const Auth = () => {
         });
         navigate("/");
       } else {
+        if (!whatsappNumber) {
+          throw new Error("Please enter your WhatsApp number");
+        }
+
+        // Extract country code and number from WhatsApp input
+        const phoneMatch = whatsappNumber.match(/^\+(\d{1,3})(\d+)$/);
+        if (!phoneMatch) {
+          throw new Error("Invalid WhatsApp number format");
+        }
+        const countryCode = `+${phoneMatch[1]}`;
+        const number = phoneMatch[2];
+
         const { error, data } = await supabase.auth.signUp({
-          phone: fullPhone,
+          email,
           password,
           options: {
             data: {
@@ -135,7 +135,7 @@ const Auth = () => {
             </CardTitle>
             <CardDescription>
               {isLogin
-                ? "Sign in with your WhatsApp number"
+                ? "Sign in with your email"
                 : "Create your account to become a member"}
             </CardDescription>
           </CardHeader>
@@ -156,21 +156,33 @@ const Auth = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                <PhoneInput
-                  international
-                  defaultCountry="US"
-                  value={whatsappNumber}
-                  onChange={(value) => setWhatsappNumber(value || "")}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                {!isLogin && (
+              </div>
+
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                  <PhoneInput
+                    international
+                    defaultCountry="US"
+                    value={whatsappNumber}
+                    onChange={(value) => setWhatsappNumber(value || "")}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    required
+                  />
                   <p className="text-xs text-muted-foreground">
                     We'll send event reminders via WhatsApp. Your number will only be used for union communications.
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
