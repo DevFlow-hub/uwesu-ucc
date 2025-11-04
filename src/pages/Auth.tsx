@@ -100,11 +100,24 @@ const Auth = () => {
         navigate("/");
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      const errorMessage = error.message || error.error_description || "An error occurred";
+      
+      // Handle "user already registered" error specifically
+      if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
+        toast({
+          title: "Account Already Exists",
+          description: "This email is already registered. Please sign in instead.",
+          variant: "destructive",
+        });
+        // Auto-switch to login mode
+        setIsLogin(true);
+      } else {
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
