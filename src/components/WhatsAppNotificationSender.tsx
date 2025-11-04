@@ -43,20 +43,22 @@ export const WhatsAppNotificationSender = () => {
     const eventDate = new Date(selectedEvent.event_date);
     const dateStr = eventDate.toLocaleDateString('en-US', { 
       month: 'long', 
-      day: 'numeric' 
+      day: 'numeric',
+      year: 'numeric'
     });
     const timeStr = eventDate.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
       minute: '2-digit' 
     });
 
-    return `📅 UNION EVENT
+    return `📅 UNION EVENT (UWESU-UCC)
 
 ${selectedEvent.title}
-${dateStr} • ${timeStr}
-${selectedEvent.venue || 'Venue TBA'}
 
-${selectedEvent.description || 'Event details coming soon.'}`;
+📅 Date: ${dateStr}
+⏰ Time: ${timeStr}
+📍 Venue: ${selectedEvent.venue || 'Venue TBA'}
+📝 Purpose: ${selectedEvent.description || 'Event details coming soon.'}`;
   };
 
   const openWhatsApp = (whatsappNumber: string, countryCode: string) => {
