@@ -163,13 +163,21 @@ ${event.title}
   };
 
   const sendEventEmail = async (email: string, memberName: string, event: any) => {
+    console.log('sendEventEmail called with:', { email, memberName, eventTitle: event?.title });
+    
+    if (!email) {
+      toast.error('No email address provided');
+      return;
+    }
+    
     setSendingEmail(email);
     try {
       const eventDate = new Date(event.event_date);
       const dateStr = format(eventDate, "MMMM d, yyyy");
       const timeStr = format(eventDate, "h:mm a");
 
-      const { error } = await supabase.functions.invoke('send-email', {
+      console.log('Invoking send-email function...');
+      const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: email,
           subject: `📅 Upcoming Event: ${event.title} - UWESU-UCC`,
@@ -213,11 +221,17 @@ ${event.title}
         },
       });
 
-      if (error) throw error;
-      toast.success(`Email sent to ${memberName}`);
+      console.log('Email function response:', { data, error });
+
+      if (error) {
+        console.error('Email function error:', error);
+        throw error;
+      }
+      
+      toast.success(`✅ Email sent successfully to ${memberName}`);
     } catch (error: any) {
       console.error('Error sending email:', error);
-      toast.error(`Failed to send email to ${memberName}`);
+      toast.error(`❌ Failed to send email: ${error.message || 'Unknown error'}`);
     } finally {
       setSendingEmail(null);
     }
