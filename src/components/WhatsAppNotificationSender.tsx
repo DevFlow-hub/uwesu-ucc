@@ -1,27 +1,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 export const WhatsAppNotificationSender = () => {
-  const [selectedEventId, setSelectedEventId] = useState<string>("");
-
-  const { data: events } = useQuery({
-    queryKey: ["events"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("event_date", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
+  const [message, setMessage] = useState<string>("");
 
   const { data: members } = useQuery({
     queryKey: ["members-with-whatsapp"],
@@ -36,32 +24,12 @@ export const WhatsAppNotificationSender = () => {
     },
   });
 
-  const selectedEvent = events?.find(e => e.id === selectedEventId);
-
-  const generateWhatsAppMessage = () => {
-    if (!selectedEvent) return "";
-    
-    const eventDate = new Date(selectedEvent.event_date);
-    const dateStr = format(eventDate, "MMMM d, yyyy");
-    const timeStr = format(eventDate, "h:mm a");
-
-    return `📅 UNION EVENT (UWESU-UCC)
-
-${selectedEvent.title}
-
-📅 Date: ${dateStr}
-⏰ Time: ${timeStr}
-📍 Venue: ${selectedEvent.venue || 'Venue TBA'}
-📝 Purpose: ${selectedEvent.description || 'Event details coming soon.'}`;
-  };
-
   const openWhatsApp = (whatsappNumber: string, countryCode: string) => {
-    if (!selectedEventId) {
-      toast.error("Please select an event first");
+    if (!message.trim()) {
+      toast.error("Please enter a message first");
       return;
     }
 
-    const message = generateWhatsAppMessage();
     // Remove any spaces or special characters from the phone number
     const cleanNumber = whatsappNumber.replace(/\D/g, '');
     const fullNumber = `${countryCode}${cleanNumber}`;
@@ -80,34 +48,33 @@ ${selectedEvent.title}
             <CardTitle>Send WhatsApp Notifications</CardTitle>
           </div>
           <CardDescription>
-            Select an event and send personalized WhatsApp messages to members
+            Compose a message and send it to members via WhatsApp
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Event</label>
-            <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose an event to announce" />
-              </SelectTrigger>
-              <SelectContent>
-                {events?.map((event) => (
-                  <SelectItem key={event.id} value={event.id}>
-                    {event.title} - {new Date(event.event_date).toLocaleDateString()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="message">Message</Label>
+            <Textarea
+              id="message"
+              placeholder="Type your message here... (e.g., Welcome to UWESU-UCC, event announcements, important notices)"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={8}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              {message.length} characters
+            </p>
           </div>
 
-          {selectedEvent && (
+          {message.trim() && (
             <Card className="bg-muted/50">
               <CardHeader>
                 <CardTitle className="text-base">Message Preview</CardTitle>
               </CardHeader>
               <CardContent>
                 <pre className="text-sm whitespace-pre-wrap font-sans">
-                  {generateWhatsAppMessage()}
+                  {message}
                 </pre>
               </CardContent>
             </Card>
@@ -115,7 +82,7 @@ ${selectedEvent.title}
         </CardContent>
       </Card>
 
-      {selectedEventId && (
+      {message.trim() && (
         <Card>
           <CardHeader>
             <CardTitle>Members ({members?.length || 0})</CardTitle>
