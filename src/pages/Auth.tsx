@@ -7,49 +7,48 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { z } from "zod";
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
-  const [showResetDialog, setShowResetDialog] = useState(false);
-  const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if this is a password reset callback
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const type = hashParams.get('type');
-    if (type === 'recovery') {
-      setIsResettingPassword(true);
-    }
-    // Removed auto-redirect - users can access login page anytime
-  }, []);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/");
+      }
+    });
+  }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (!isLogin && !whatsappNumber) {
+      if (!whatsappNumber) {
         throw new Error("Please enter your WhatsApp number");
       }
 
+      // Extract country code and number from WhatsApp input
+      const phoneMatch = whatsappNumber.match(/^\+(\d{1,3})(\d+)$/);
+      if (!phoneMatch) {
+        throw new Error("Invalid WhatsApp number format");
+      }
+      const countryCode = `+${phoneMatch[1]}`;
+      const number = phoneMatch[2];
+      const fullPhone = whatsappNumber;
+
       if (isLogin) {
         const { error, data } = await supabase.auth.signInWithPassword({
-          email,
+          phone: fullPhone,
           password,
         });
 
@@ -66,22 +65,13 @@ const Auth = () => {
         });
         navigate("/");
       } else {
-        // Extract country code and number from WhatsApp input
-        const phoneMatch = whatsappNumber.match(/^\+(\d{1,3})(\d+)$/);
-        if (!phoneMatch) {
-          throw new Error("Invalid WhatsApp number format");
-        }
-        const countryCode = `+${phoneMatch[1]}`;
-        const number = phoneMatch[2];
-
         const { error, data } = await supabase.auth.signUp({
-          email,
+          phone: fullPhone,
           password,
           options: {
             data: {
               full_name: fullName,
             },
-            emailRedirectTo: `${window.location.origin}/`,
           },
         });
 
@@ -120,62 +110,6 @@ const Auth = () => {
     }
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth`,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Password reset email sent!",
-        description: "Check your email for the password reset link.",
-      });
-      setShowResetDialog(false);
-      setResetEmail("");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Password updated!",
-        description: "Your password has been successfully reset.",
-      });
-      setIsResettingPassword(false);
-      setNewPassword("");
-      navigate("/");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
@@ -197,101 +131,45 @@ const Auth = () => {
               </div>
             </div>
             <CardTitle className="text-2xl">
-              {isResettingPassword 
-                ? "Reset Your Password" 
-                : isLogin ? "Welcome Back" : "Join Our Union"}
+              {isLogin ? "Welcome Back" : "Join Our Union"}
             </CardTitle>
             <CardDescription>
-              {isResettingPassword
-                ? "Enter your new password below"
-                : isLogin
-                ? "Sign in to access your member dashboard"
+              {isLogin
+                ? "Sign in with your WhatsApp number"
                 : "Create your account to become a member"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isResettingPassword ? (
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="newPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your new password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-hero"
-                  disabled={loading}
-                >
-                  {loading ? "Updating..." : "Update Password"}
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={handleAuth} className="space-y-4">
+            <form onSubmit={handleAuth} className="space-y-4">
               {!isLogin && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                    <PhoneInput
-                      international
-                      defaultCountry="US"
-                      value={whatsappNumber}
-                      onChange={(value) => setWhatsappNumber(value || "")}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      We'll send event reminders via WhatsApp. Your number will only be used for union communications.
-                    </p>
-                  </div>
-                </>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                <PhoneInput
+                  international
+                  defaultCountry="US"
+                  value={whatsappNumber}
+                  onChange={(value) => setWhatsappNumber(value || "")}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                   required
                 />
+                {!isLogin && (
+                  <p className="text-xs text-muted-foreground">
+                    We'll send event reminders via WhatsApp. Your number will only be used for union communications.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -331,45 +209,6 @@ const Auth = () => {
                 {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
               </Button>
 
-              {isLogin && (
-                <div className="text-center">
-                  <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-                    <DialogTrigger asChild>
-                      <button
-                        type="button"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Forgot password?
-                      </button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Reset Password</DialogTitle>
-                        <DialogDescription>
-                          Enter your email address and we'll send you a link to reset your password.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handlePasswordReset} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="resetEmail">Email</Label>
-                          <Input
-                            id="resetEmail"
-                            type="email"
-                            placeholder="Enter your email"
-                            value={resetEmail}
-                            onChange={(e) => setResetEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={loading}>
-                          {loading ? "Sending..." : "Send Reset Link"}
-                        </Button>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              )}
-
               <div className="text-center pt-4">
                 <button
                   type="button"
@@ -382,7 +221,6 @@ const Auth = () => {
                 </button>
               </div>
             </form>
-            )}
           </CardContent>
         </Card>
       </div>
