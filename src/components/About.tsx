@@ -45,10 +45,10 @@ const About = () => {
           <div className="inline-block mb-4">
             <span className="text-sm font-bold tracking-wider text-secondary uppercase">Who We Are</span>
           </div>
-          <h2 className="text-4xl md:text-6xl font-heading font-extrabold text-foreground mb-6 leading-tight">
+          <h2 className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-4 leading-tight">
             About Our Union
           </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-display font-light leading-relaxed">
+          <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto font-display leading-relaxed">
             We are the heart of student life and the champion of our collective voice. Our Union is built on a foundation of unity in diversity, where every culture is not just welcomed but cherished, upheld, and celebrated. We believe that our rich tapestry of backgrounds is our greatest strength. By bringing students together, we create a powerful force for positive change—fostering personal development, impacting lives through meaningful support and advocacy, and building an inclusive community where every student can thrive. We are more than an organization; we are a united family dedicated to making our university experience transformative for all.
           </p>
         </div>
@@ -66,9 +66,9 @@ const About = () => {
                     <Eye className="h-8 w-8 text-primary" />
                   </div>
                 </div>
-                <h3 className="text-3xl font-heading font-extrabold text-foreground">Our Vision</h3>
+                <h3 className="text-2xl font-heading font-extrabold text-foreground">Our Vision</h3>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-lg">
+              <p className="text-muted-foreground leading-relaxed text-base">
                 {unionInfo.vision || "Loading vision statement..."}
               </p>
             </CardContent>
@@ -86,9 +86,9 @@ const About = () => {
                     <Target className="h-8 w-8 text-secondary" />
                   </div>
                 </div>
-                <h3 className="text-3xl font-heading font-extrabold text-foreground">Our Mission</h3>
+                <h3 className="text-2xl font-heading font-extrabold text-foreground">Our Mission</h3>
               </div>
-              <p className="text-muted-foreground leading-relaxed text-lg">
+              <p className="text-muted-foreground leading-relaxed text-base">
                 {unionInfo.mission || "Loading mission statement..."}
               </p>
             </CardContent>
