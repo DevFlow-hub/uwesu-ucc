@@ -21,41 +21,7 @@ const Gallery = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const checkAuthAndAdmin = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      
-      setIsAdmin(!!data);
-      setLoading(false);
-    };
-
-    checkAuthAndAdmin();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  if (loading) {
-    return null;
-  }
-
+  // All hooks must be called before any conditional returns
   const { data: categories } = useQuery({
     queryKey: ["gallery-categories"],
     queryFn: async () => {
@@ -89,6 +55,79 @@ const Gallery = () => {
       return data;
     },
   });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async (imageData: { id: string; imageUrl: string }) => {
+      // Extract file path from URL
+      const urlParts = imageData.imageUrl.split("/");
+      const filePath = urlParts[urlParts.length - 1];
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from("gallery-images")
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from("gallery_images")
+        .delete()
+        .eq("id", imageData.id);
+
+      if (dbError) throw dbError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
+      toast({
+        title: "Success",
+        description: "Image deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    const checkAuthAndAdmin = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      
+      setIsAdmin(!!data);
+      setLoading(false);
+    };
+
+    checkAuthAndAdmin();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Now conditional return is safe - all hooks have been called
+  if (loading) {
+    return null;
+  }
 
   const handleDownload = async (imageUrl: string, title: string) => {
     try {
@@ -158,43 +197,6 @@ const Gallery = () => {
       });
     }
   };
-
-  const deleteImageMutation = useMutation({
-    mutationFn: async (imageData: { id: string; imageUrl: string }) => {
-      // Extract file path from URL
-      const urlParts = imageData.imageUrl.split("/");
-      const filePath = urlParts[urlParts.length - 1];
-
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from("gallery-images")
-        .remove([filePath]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from("gallery_images")
-        .delete()
-        .eq("id", imageData.id);
-
-      if (dbError) throw dbError;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
-      toast({
-        title: "Success",
-        description: "Image deleted successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleDelete = (imageId: string, imageUrl: string) => {
     if (confirm("Are you sure you want to delete this image?")) {
