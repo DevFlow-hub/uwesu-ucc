@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, TrendingUp, Award } from "lucide-react";
+import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 
 const Stats = () => {
+  const { ref: statsRef, isVisible: statsVisible } = useScrollAnimation();
+  
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -60,13 +63,17 @@ const Stats = () => {
         <div className="absolute bottom-10 right-10 w-64 h-64 bg-secondary rounded-full blur-3xl" />
       </div>
       
-      <div className="container mx-auto px-4 relative z-10">
+      <div ref={statsRef} className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {statItems.map((item, index) => (
             <div
               key={item.label}
-              className="group text-center p-10 bg-gradient-card rounded-2xl shadow-card hover:shadow-elevated transition-all duration-500 animate-slide-up border border-border/50 hover:border-secondary/30 hover:scale-105"
-              style={{ animationDelay: `${index * 0.15}s` }}
+              className={`group text-center p-10 bg-gradient-card rounded-2xl shadow-card hover:shadow-elevated transition-all duration-700 border border-border/50 hover:border-secondary/30 hover:scale-105 ${
+                statsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+              }`}
+              style={{ 
+                transitionDelay: statsVisible ? `${index * 150}ms` : '0ms'
+              }}
             >
               <div className="relative mb-6">
                 <div className="absolute inset-0 bg-secondary/10 rounded-full blur-xl group-hover:blur-2xl transition-all" />
