@@ -93,10 +93,6 @@ const Comments = () => {
     enabled: !!user, // Only run query when user is loaded
   });
 
-  if (loading) {
-    return null;
-  }
-
   const createMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!user) throw new Error("Must be logged in");
@@ -139,6 +135,10 @@ const Comments = () => {
       });
     },
   });
+
+  if (loading) {
+    return null;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
