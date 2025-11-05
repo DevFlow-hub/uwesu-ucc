@@ -4,6 +4,7 @@ import { Users, Menu, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -93,6 +94,7 @@ const Navigation = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeSwitcher />
             {user && isAdmin && (
               <Link to="/admin">
                 <Button variant="secondary" size="sm">Admin</Button>

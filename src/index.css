@@ -87,6 +87,96 @@ All colors MUST be HSL.
     --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -1px hsl(0 0% 0% / 0.2);
     --shadow-elevated: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -2px hsl(0 0% 0% / 0.2);
   }
+
+  .ocean {
+    --background: 200 30% 96%;
+    --foreground: 200 25% 15%;
+
+    --card: 200 30% 98%;
+    --card-foreground: 200 25% 15%;
+
+    --popover: 200 30% 98%;
+    --popover-foreground: 200 25% 15%;
+
+    --primary: 200 80% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 180 60% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 200 20% 90%;
+    --muted-foreground: 200 20% 40%;
+
+    --accent: 180 60% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 25% 85%;
+    --input: 200 25% 85%;
+    --ring: 200 80% 35%;
+  }
+
+  .sunset {
+    --background: 30 30% 96%;
+    --foreground: 30 25% 15%;
+
+    --card: 30 30% 98%;
+    --card-foreground: 30 25% 15%;
+
+    --popover: 30 30% 98%;
+    --popover-foreground: 30 25% 15%;
+
+    --primary: 15 80% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 45 90% 60%;
+    --secondary-foreground: 30 25% 15%;
+
+    --muted: 30 20% 90%;
+    --muted-foreground: 30 20% 40%;
+
+    --accent: 45 90% 60%;
+    --accent-foreground: 30 25% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 25% 85%;
+    --input: 30 25% 85%;
+    --ring: 15 80% 50%;
+  }
+
+  .forest {
+    --background: 140 25% 96%;
+    --foreground: 140 30% 15%;
+
+    --card: 140 25% 98%;
+    --card-foreground: 140 30% 15%;
+
+    --popover: 140 25% 98%;
+    --popover-foreground: 140 30% 15%;
+
+    --primary: 140 60% 30%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 160 50% 45%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 140 20% 90%;
+    --muted-foreground: 140 20% 40%;
+
+    --accent: 160 50% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 140 20% 85%;
+    --input: 140 20% 85%;
+    --ring: 140 60% 30%;
+  }
 }
 
 @layer base {

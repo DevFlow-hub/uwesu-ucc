@@ -34,9 +34,7 @@ const Hero = () => {
           alt="Union solidarity"
           className="w-full h-full object-cover scale-105 animate-[zoom_20s_ease-in-out_infinite_alternate]"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/90 to-primary/80" />
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-secondary/20 via-transparent to-transparent opacity-50" />
+        <div className="absolute inset-0 bg-primary/90" />
       </div>
 
       {/* Content */}
