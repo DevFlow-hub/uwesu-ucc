@@ -11,10 +11,10 @@ import { useEffect, useState } from "react";
 type Theme = "light" | "ocean" | "sunset" | "forest";
 
 export function ThemeSwitcher() {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("forest");
 
   useEffect(() => {
-    const savedTheme = (localStorage.getItem("theme") as Theme) || "light";
+    const savedTheme = (localStorage.getItem("theme") as Theme) || "forest";
     setTheme(savedTheme);
     applyTheme(savedTheme);
   }, []);
