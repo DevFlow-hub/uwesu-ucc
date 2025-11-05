@@ -68,7 +68,7 @@ const Hero = () => {
             {!isAuthenticated && (
               <Button 
                 size="lg" 
-                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground text-lg px-10 py-6 shadow-glow hover:shadow-elevated transition-all duration-300 hover:scale-105 font-semibold"
+                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground text-lg px-10 py-6 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 font-semibold rounded-lg"
                 onClick={() => navigate("/auth")}
               >
                 Join Our Union
@@ -78,7 +78,7 @@ const Hero = () => {
             <Button 
               size="lg" 
               variant="outline" 
-              className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-2 border-primary-foreground/40 hover:border-primary-foreground/60 text-lg px-10 py-6 backdrop-blur-md transition-all duration-300 hover:scale-105 font-semibold"
+              className="bg-background/10 hover:bg-background/20 text-primary-foreground border-2 border-background/30 hover:border-background/50 text-lg px-10 py-6 backdrop-blur-md transition-all duration-300 hover:scale-105 font-semibold rounded-lg"
               onClick={() => {
                 const element = document.getElementById("about");
                 element?.scrollIntoView({ behavior: "smooth" });

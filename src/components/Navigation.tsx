@@ -74,9 +74,9 @@ const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <Users className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold text-foreground">UWESU-UCC</span>
+            <span className="text-xl font-bold text-foreground whitespace-nowrap">UWESU-UCC</span>
           </Link>
           
           <div className="hidden md:flex items-center gap-6">
@@ -92,19 +92,19 @@ const Navigation = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             {user && isAdmin && (
               <Link to="/admin">
-                <Button variant="secondary">Admin</Button>
+                <Button variant="secondary" size="sm">Admin</Button>
               </Link>
             )}
             {user ? (
-              <Button onClick={handleLogout} variant="outline">
+              <Button onClick={handleLogout} variant="outline" size="sm">
                 Logout
               </Button>
             ) : (
               <Link to="/auth">
-                <Button variant="outline">Sign Up</Button>
+                <Button variant="outline" size="sm">Sign Up</Button>
               </Link>
             )}
             
