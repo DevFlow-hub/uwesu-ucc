@@ -49,7 +49,7 @@ const About = () => {
             About Our Union
           </h2>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-display font-light leading-relaxed">
-            Dedicated to protecting workers' rights and building a stronger community
+            We are the heart of student life and the champion of our collective voice. Our Union is built on a foundation of unity in diversity, where every culture is not just welcomed but cherished, upheld, and celebrated. We believe that our rich tapestry of backgrounds is our greatest strength. By bringing students together, we create a powerful force for positive change—fostering personal development, impacting lives through meaningful support and advocacy, and building an inclusive community where every student can thrive. We are more than an organization; we are a united family dedicated to making our university experience transformative for all.
           </p>
         </div>
 
