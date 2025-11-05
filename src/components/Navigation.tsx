@@ -13,13 +13,26 @@ const Navigation = () => {
   const { toast } = useToast();
 
   const menuItems = [
-    { name: "Home", path: "/" },
-    { name: "About", path: "/#about" },
-    { name: "Executives", path: "/#executives" },
-    { name: "Gallery", path: "/gallery" },
-    { name: "Events", path: "/events" },
-    { name: "Comments", path: "/comments" },
+    { name: "Home", path: "/", section: null },
+    { name: "About", path: "/", section: "about" },
+    { name: "Executives", path: "/", section: "executives" },
+    { name: "Gallery", path: "/gallery", section: null },
+    { name: "Events", path: "/events", section: null },
+    { name: "Comments", path: "/comments", section: null },
   ];
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, item: typeof menuItems[0]) => {
+    if (item.section) {
+      e.preventDefault();
+      navigate("/");
+      setTimeout(() => {
+        const element = document.getElementById(item.section);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -71,6 +84,7 @@ const Navigation = () => {
               <Link
                 key={item.name}
                 to={item.path}
+                onClick={(e) => handleNavClick(e, item)}
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 {item.name}
@@ -111,7 +125,10 @@ const Navigation = () => {
                 key={item.name}
                 to={item.path}
                 className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-                onClick={() => setIsOpen(false)}
+                onClick={(e) => {
+                  handleNavClick(e, item);
+                  setIsOpen(false);
+                }}
               >
                 {item.name}
               </Link>

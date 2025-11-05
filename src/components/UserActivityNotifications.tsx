@@ -236,8 +236,8 @@ const UserActivityNotifications = () => {
                       disabled={revokeAdminMutation.isPending}
                       className="flex-1 sm:flex-none"
                     >
-                      <ShieldOff className="h-4 w-4 sm:mr-1" />
-                      <span className="hidden sm:inline">Revoke</span>
+                      <ShieldOff className="h-4 w-4 mr-1" />
+                      Revoke
                     </Button>
                   ) : (
                     <Button
@@ -247,8 +247,8 @@ const UserActivityNotifications = () => {
                       disabled={grantAdminMutation.isPending}
                       className="flex-1 sm:flex-none"
                     >
-                      <Shield className="h-4 w-4 sm:mr-1" />
-                      <span className="hidden sm:inline">Make Admin</span>
+                      <Shield className="h-4 w-4 mr-1" />
+                      Make Admin
                     </Button>
                   )}
                   
@@ -260,8 +260,8 @@ const UserActivityNotifications = () => {
                       disabled={unblockUserMutation.isPending}
                       className="flex-1 sm:flex-none"
                     >
-                      <CheckCircle className="h-4 w-4 sm:mr-1" />
-                      <span className="hidden sm:inline">Unblock</span>
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Unblock
                     </Button>
                   ) : (
                     <Button
@@ -271,8 +271,8 @@ const UserActivityNotifications = () => {
                       disabled={blockUserMutation.isPending}
                       className="flex-1 sm:flex-none"
                     >
-                      <Ban className="h-4 w-4 sm:mr-1" />
-                      <span className="hidden sm:inline">Block</span>
+                      <Ban className="h-4 w-4 mr-1" />
+                      Block
                     </Button>
                   )}
                 </div>
