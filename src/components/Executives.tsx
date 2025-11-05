@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mail, Phone, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 
 interface Executive {
   id: string;
@@ -16,8 +15,6 @@ interface Executive {
 }
 
 const Executives = () => {
-  const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation(0.2);
-  const { ref: cardsRef, isVisible: cardsVisible } = useScrollAnimation(0.2);
   const [executives, setExecutives] = useState<Executive[]>([]);
 
   useEffect(() => {
@@ -44,12 +41,7 @@ const Executives = () => {
       </div>
       
       <div className="container mx-auto px-4 relative z-10">
-        <div 
-          ref={headerRef}
-          className={`text-center mb-20 transition-all duration-700 ${
-            headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          }`}
-        >
+        <div className="text-center mb-20">
           <div className="inline-block mb-4">
             <span className="text-sm font-bold tracking-wider text-secondary uppercase">Leadership</span>
           </div>
@@ -69,16 +61,11 @@ const Executives = () => {
             </p>
           </div>
         ) : (
-          <div ref={cardsRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {executives.map((exec, index) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {executives.map((exec) => (
               <Card
                 key={exec.id}
-                className={`group overflow-hidden hover:shadow-elevated transition-all duration-700 border-2 border-border hover:border-secondary/50 hover:scale-105 bg-gradient-card ${
-                  cardsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-                }`}
-                style={{ 
-                  transitionDelay: cardsVisible ? `${index * 100}ms` : '0ms'
-                }}
+                className="group overflow-hidden hover:shadow-elevated transition-all duration-300 border-2 border-border hover:border-secondary/50 hover:scale-105 bg-gradient-card"
               >
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center">
