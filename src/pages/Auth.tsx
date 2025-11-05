@@ -11,7 +11,7 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -34,7 +34,19 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (mode === "reset") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Check your email",
+          description: "We've sent you a password reset link.",
+        });
+        setMode("login");
+      } else if (mode === "login") {
         const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -110,7 +122,7 @@ const Auth = () => {
           variant: "destructive",
         });
         // Auto-switch to login mode
-        setIsLogin(true);
+        setMode("login");
       } else {
         toast({
           title: "Error",
@@ -136,17 +148,19 @@ const Auth = () => {
               </div>
             </div>
             <CardTitle className="text-2xl">
-              {isLogin ? "Welcome Back" : "Join Our Union"}
+              {mode === "reset" ? "Reset Password" : mode === "login" ? "Welcome Back" : "Join Our Union"}
             </CardTitle>
             <CardDescription>
-              {isLogin
+              {mode === "reset"
+                ? "Enter your email to receive a password reset link"
+                : mode === "login"
                 ? "Sign in with your email"
                 : "Create your account to become a member"}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAuth} className="space-y-4">
-              {!isLogin && (
+              {mode === "signup" && (
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full Name</Label>
                   <Input
@@ -172,7 +186,7 @@ const Auth = () => {
                 />
               </div>
 
-              {!isLogin && (
+              {mode === "signup" && (
                 <div className="space-y-2">
                   <Label htmlFor="whatsapp">WhatsApp Number</Label>
                   <PhoneInput
@@ -189,53 +203,74 @@ const Auth = () => {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
+              {mode !== "reset" && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      onClick={() => setMode("reset")}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
                 </div>
-              </div>
+              )}
 
               <Button
                 type="submit"
                 className="w-full bg-gradient-hero"
                 disabled={loading}
               >
-                {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
+                {loading ? "Loading..." : mode === "reset" ? "Send Reset Link" : mode === "login" ? "Sign In" : "Sign Up"}
               </Button>
 
-              <div className="text-center pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {isLogin
-                    ? "Don't have an account? Sign up"
-                    : "Already have an account? Sign in"}
-                </button>
+              <div className="text-center pt-4 space-y-2">
+                {mode === "reset" ? (
+                  <button
+                    type="button"
+                    onClick={() => setMode("login")}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Back to sign in
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {mode === "login"
+                      ? "Don't have an account? Sign up"
+                      : "Already have an account? Sign in"}
+                  </button>
+                )}
               </div>
             </form>
           </CardContent>
