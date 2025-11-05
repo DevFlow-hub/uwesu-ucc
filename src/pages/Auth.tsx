@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,11 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  
+  // Get the page user was trying to access
+  const from = (location.state as any)?.from || "/";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -63,7 +67,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have successfully logged in.",
         });
-        navigate("/");
+        navigate(from);
       } else {
         if (!whatsappNumber) {
           throw new Error("Please enter your WhatsApp number");
@@ -109,7 +113,7 @@ const Auth = () => {
           title: "Account created!",
           description: "You have been automatically logged in.",
         });
-        navigate("/");
+        navigate(from);
       }
     } catch (error: any) {
       const errorMessage = error.message || error.error_description || "An error occurred";

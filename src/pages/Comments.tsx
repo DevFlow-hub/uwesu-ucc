@@ -23,7 +23,7 @@ const Comments = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate("/auth");
+        navigate("/auth", { state: { from: "/comments" } });
         return;
       }
 
@@ -36,7 +36,7 @@ const Comments = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        navigate("/auth");
+        navigate("/auth", { state: { from: "/comments" } });
         return;
       }
 
