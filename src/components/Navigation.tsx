@@ -93,29 +93,31 @@ const Navigation = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             <ThemeSwitcher />
             {user && isAdmin && (
               <Link to="/admin">
-                <Button variant="secondary" size="sm">Admin</Button>
+                <Button variant="secondary" size="sm" className="h-8 px-2 md:px-4 text-xs">
+                  Admin
+                </Button>
               </Link>
             )}
             {user ? (
-              <Button onClick={handleLogout} variant="outline" size="sm">
+              <Button onClick={handleLogout} variant="outline" size="sm" className="h-8 px-2 md:px-4 text-xs">
                 Logout
               </Button>
             ) : (
               <Link to="/auth">
-                <Button variant="outline" size="sm">Sign Up</Button>
+                <Button variant="outline" size="sm" className="h-8 px-2 md:px-4 text-xs">Sign Up</Button>
               </Link>
             )}
             
             <button
-              className="md:hidden text-foreground hover:text-primary transition-colors"
+              className="md:hidden text-foreground hover:text-primary transition-colors ml-1"
               onClick={() => setIsOpen(!isOpen)}
               aria-label="Toggle menu"
             >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
