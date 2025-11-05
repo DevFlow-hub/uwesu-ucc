@@ -2,12 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Target, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useScrollAnimation } from "@/hooks/use-scroll-animation";
 
 const About = () => {
-  const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation();
-  const { ref: visionRef, isVisible: visionVisible } = useScrollAnimation();
-  const { ref: missionRef, isVisible: missionVisible } = useScrollAnimation();
   
   const [unionInfo, setUnionInfo] = useState({
     vision: "",
@@ -45,12 +41,7 @@ const About = () => {
       </div>
       
       <div className="container mx-auto px-4 relative z-10">
-        <div 
-          ref={headerRef}
-          className={`text-center mb-20 transition-all duration-700 ${
-            headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          }`}
-        >
+        <div className="text-center mb-20">
           <div className="inline-block mb-4">
             <span className="text-sm font-bold tracking-wider text-secondary uppercase">Who We Are</span>
           </div>
@@ -64,10 +55,7 @@ const About = () => {
 
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           <Card 
-            ref={visionRef}
-            className={`group relative overflow-hidden border-2 border-border hover:border-primary/50 transition-all duration-700 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02] ${
-              visionVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-            }`}
+            className="group relative overflow-hidden border-2 border-border hover:border-primary/50 transition-all duration-300 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02]"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-10 relative">
@@ -87,10 +75,7 @@ const About = () => {
           </Card>
 
           <Card 
-            ref={missionRef}
-            className={`group relative overflow-hidden border-2 border-border hover:border-secondary/50 transition-all duration-700 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02] ${
-              missionVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-            }`}
+            className="group relative overflow-hidden border-2 border-border hover:border-secondary/50 transition-all duration-300 shadow-card hover:shadow-elevated bg-gradient-card hover:scale-[1.02]"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-10 relative">
