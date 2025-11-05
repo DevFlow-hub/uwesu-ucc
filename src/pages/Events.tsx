@@ -88,6 +88,25 @@ const Events = () => {
     enabled: isAdmin,
   });
 
+  // All mutation hooks must be called BEFORE any conditional returns
+  const deleteEventMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", eventId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["past-events"] });
+      toast.success("Event deleted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to delete event");
+    },
+  });
+
   useEffect(() => {
     const checkAuthAndAdmin = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -121,24 +140,6 @@ const Events = () => {
   if (loading) {
     return null;
   }
-
-  const deleteEventMutation = useMutation({
-    mutationFn: async (eventId: string) => {
-      const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", eventId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["past-events"] });
-      toast.success("Event deleted successfully");
-    },
-    onError: () => {
-      toast.error("Failed to delete event");
-    },
-  });
 
   const handleDeleteClick = (eventId: string) => {
     setEventToDelete(eventId);
