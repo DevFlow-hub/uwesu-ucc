@@ -20,6 +20,14 @@ const Comments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const checkAdminStatus = async (userId: string) => {
+    const { data } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    setIsAdmin(data || false);
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
@@ -54,14 +62,6 @@ const Comments = () => {
   if (loading) {
     return null;
   }
-
-  const checkAdminStatus = async (userId: string) => {
-    const { data } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "admin",
-    });
-    setIsAdmin(data || false);
-  };
 
   const { data: comments } = useQuery({
     queryKey: ["comments"],
