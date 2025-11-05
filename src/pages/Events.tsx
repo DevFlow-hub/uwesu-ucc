@@ -32,6 +32,62 @@ const Events = () => {
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
+  // All hooks must be called before any conditional returns
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .gte("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: pastEvents } = useQuery({
+    queryKey: ["past-events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .lt("event_date", new Date().toISOString())
+        .order("event_date", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: whatsappMembers } = useQuery({
+    queryKey: ["members-with-whatsapp"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, whatsapp_number, country_code")
+        .not("whatsapp_number", "is", null)
+        .order("full_name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin,
+  });
+
+  const { data: emailMembers } = useQuery({
+    queryKey: ["members-with-email"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .not("email", "is", null)
+        .order("full_name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin,
+  });
+
   useEffect(() => {
     const checkAuthAndAdmin = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -61,36 +117,10 @@ const Events = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Now conditional return is safe - all hooks have been called
   if (loading) {
     return null;
   }
-
-  const { data: events, isLoading } = useQuery({
-    queryKey: ["events"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .gte("event_date", new Date().toISOString())
-        .order("event_date", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: pastEvents } = useQuery({
-    queryKey: ["past-events"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .lt("event_date", new Date().toISOString())
-        .order("event_date", { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const deleteEventMutation = useMutation({
     mutationFn: async (eventId: string) => {
@@ -120,34 +150,6 @@ const Events = () => {
       setEventToDelete(null);
     }
   };
-
-  const { data: whatsappMembers } = useQuery({
-    queryKey: ["members-with-whatsapp"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, whatsapp_number, country_code")
-        .not("whatsapp_number", "is", null)
-        .order("full_name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: isAdmin,
-  });
-
-  const { data: emailMembers } = useQuery({
-    queryKey: ["members-with-email"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, email")
-        .not("email", "is", null)
-        .order("full_name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: isAdmin,
-  });
 
   const members = notificationChannel === "whatsapp" ? whatsappMembers : emailMembers;
 
