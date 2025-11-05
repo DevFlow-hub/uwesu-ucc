@@ -16,8 +16,8 @@ interface Executive {
 }
 
 const Executives = () => {
-  const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation();
-  const { ref: cardsRef, isVisible: cardsVisible } = useScrollAnimation();
+  const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation(0.2);
+  const { ref: cardsRef, isVisible: cardsVisible } = useScrollAnimation(0.2);
   const [executives, setExecutives] = useState<Executive[]>([]);
 
   useEffect(() => {
