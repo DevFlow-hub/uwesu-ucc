@@ -59,10 +59,6 @@ const Comments = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  if (loading) {
-    return null;
-  }
-
   const { data: comments } = useQuery({
     queryKey: ["comments"],
     queryFn: async () => {
@@ -94,7 +90,12 @@ const Comments = () => {
         };
       });
     },
+    enabled: !!user, // Only run query when user is loaded
   });
+
+  if (loading) {
+    return null;
+  }
 
   const createMutation = useMutation({
     mutationFn: async (content: string) => {
