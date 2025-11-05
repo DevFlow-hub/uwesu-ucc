@@ -32,6 +32,7 @@ const Gallery = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !loading,
   });
 
   const { data: images } = useQuery({
@@ -54,6 +55,7 @@ const Gallery = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !loading,
   });
 
   const deleteImageMutation = useMutation({
