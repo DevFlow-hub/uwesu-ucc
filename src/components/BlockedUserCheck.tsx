@@ -17,7 +17,7 @@ const BlockedUserCheck = () => {
         .from("profiles")
         .select("blocked")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error checking blocked status:", error);

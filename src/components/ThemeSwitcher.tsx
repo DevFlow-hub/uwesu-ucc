@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 
-type Theme = "light" | "dark" | "ocean" | "sunset" | "forest";
+type Theme = "light" | "ocean" | "sunset" | "forest";
 
 export function ThemeSwitcher() {
   const [theme, setTheme] = useState<Theme>("light");
@@ -21,7 +21,7 @@ export function ThemeSwitcher() {
 
   const applyTheme = (newTheme: Theme) => {
     const root = document.documentElement;
-    root.classList.remove("light", "dark", "ocean", "sunset", "forest");
+    root.classList.remove("light", "ocean", "sunset", "forest");
     root.classList.add(newTheme);
     localStorage.setItem("theme", newTheme);
   };
@@ -36,7 +36,6 @@ export function ThemeSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           {theme === "light" && <Sun className="h-4 w-4" />}
-          {theme === "dark" && <Moon className="h-4 w-4" />}
           {(theme === "ocean" || theme === "sunset" || theme === "forest") && <Palette className="h-4 w-4" />}
           <span className="hidden sm:inline">Theme</span>
         </Button>
@@ -45,10 +44,6 @@ export function ThemeSwitcher() {
         <DropdownMenuItem onClick={() => changeTheme("light")}>
           <Sun className="mr-2 h-4 w-4" />
           <span>Light</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => changeTheme("dark")}>
-          <Moon className="mr-2 h-4 w-4" />
-          <span>Dark</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => changeTheme("ocean")}>
           <Palette className="mr-2 h-4 w-4" />
