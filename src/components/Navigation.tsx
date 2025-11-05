@@ -111,8 +111,9 @@ const Navigation = () => {
             )}
             
             <button
-              className="md:hidden"
+              className="md:hidden text-foreground hover:text-primary transition-colors"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label="Toggle menu"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
