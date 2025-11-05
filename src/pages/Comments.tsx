@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
@@ -11,23 +12,36 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 const Comments = () => {
+  const navigate = useNavigate();
   const [newComment, setNewComment] = useState("");
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      setUser(session.user);
+      if (session.user) {
         checkAdminStatus(session.user.id);
       }
+      setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      setUser(session.user);
+      if (session.user) {
         checkAdminStatus(session.user.id);
       } else {
         setIsAdmin(false);
@@ -35,7 +49,11 @@ const Comments = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
+
+  if (loading) {
+    return null;
+  }
 
   const checkAdminStatus = async (userId: string) => {
     const { data } = await supabase.rpc("has_role", {

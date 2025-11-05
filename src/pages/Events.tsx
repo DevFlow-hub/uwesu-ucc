@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -22,31 +23,47 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Events = () => {
+  const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
   const [selectedEventForNotification, setSelectedEventForNotification] = useState<any | null>(null);
   const [notificationChannel, setNotificationChannel] = useState<"whatsapp" | "email">("whatsapp");
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setIsAdmin(false);
+    const checkAuthAndAdmin = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
         return;
       }
 
       const { data } = await supabase.rpc('has_role', {
-        _user_id: user.id,
+        _user_id: session.user.id,
         _role: 'admin'
       });
       
       setIsAdmin(!!data);
+      setLoading(false);
     };
 
-    checkAdmin();
-  }, []);
+    checkAuthAndAdmin();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  if (loading) {
+    return null;
+  }
 
   const { data: events, isLoading } = useQuery({
     queryKey: ["events"],
