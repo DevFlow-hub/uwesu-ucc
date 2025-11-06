@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,14 +26,28 @@ interface ExecutiveEditorProps {
 
 export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: ExecutiveEditorProps) => {
   const [formData, setFormData] = useState({
-    full_name: executive?.full_name || "",
-    email: executive?.email || "",
-    phone: executive?.phone || "",
-    designation: executive?.designation || "",
-    bio: executive?.bio || "",
+    full_name: "",
+    email: "",
+    phone: "",
+    designation: "",
+    bio: "",
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update form data when executive changes
+  useEffect(() => {
+    if (executive) {
+      setFormData({
+        full_name: executive.full_name || "",
+        email: executive.email || "",
+        phone: executive.phone || "",
+        designation: executive.designation || "",
+        bio: executive.bio || "",
+      });
+      setAvatarFile(null);
+    }
+  }, [executive]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
