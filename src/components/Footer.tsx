@@ -1,6 +1,23 @@
 import { Users, Mail, Phone, MapPin } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Footer = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLinkClick = (sectionId: string) => {
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        element?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      const element = document.getElementById(sectionId);
+      element?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-12">
@@ -16,13 +33,28 @@ const Footer = () => {
             <h3 className="font-bold text-lg mb-4">Quick Links</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80">
               <li>
-                <a href="#home" className="hover:text-primary-foreground transition-colors">Home</a>
+                <button 
+                  onClick={() => handleLinkClick('home')} 
+                  className="hover:text-primary-foreground transition-colors text-left"
+                >
+                  Home
+                </button>
               </li>
               <li>
-                <a href="#about" className="hover:text-primary-foreground transition-colors">About</a>
+                <button 
+                  onClick={() => handleLinkClick('about')} 
+                  className="hover:text-primary-foreground transition-colors text-left"
+                >
+                  About
+                </button>
               </li>
               <li>
-                <a href="#executives" className="hover:text-primary-foreground transition-colors">Executives</a>
+                <button 
+                  onClick={() => handleLinkClick('executives')} 
+                  className="hover:text-primary-foreground transition-colors text-left"
+                >
+                  Executives
+                </button>
               </li>
             </ul>
           </div>
