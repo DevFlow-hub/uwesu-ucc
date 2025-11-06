@@ -53,6 +53,12 @@ All colors MUST be HSL.
     --shadow-elevated: 0 10px 40px -10px hsl(220 40% 10% / 0.15), 0 4px 12px -4px hsl(220 40% 10% / 0.08);
     --shadow-glow: 0 0 40px hsl(176 65% 48% / 0.25), 0 0 20px hsl(176 65% 48% / 0.15);
     --shadow-hero: 0 25px 50px -12px hsl(0 0% 0% / 0.4), 0 12px 24px -8px hsl(0 0% 0% / 0.25);
+    --shadow-3d: 0 4px 0 hsl(220 40% 10% / 0.3), 0 8px 16px hsl(220 40% 10% / 0.15);
+    --shadow-3d-hover: 0 2px 0 hsl(220 40% 10% / 0.3), 0 4px 12px hsl(220 40% 10% / 0.2);
+    --shadow-3d-secondary: 0 4px 0 hsl(176 65% 35% / 0.3), 0 8px 16px hsl(176 65% 35% / 0.15);
+    --shadow-3d-secondary-hover: 0 2px 0 hsl(176 65% 35% / 0.3), 0 4px 12px hsl(176 65% 35% / 0.2);
+    --shadow-3d-destructive: 0 4px 0 hsl(0 84% 45% / 0.4), 0 8px 16px hsl(0 84% 45% / 0.15);
+    --shadow-3d-destructive-hover: 0 2px 0 hsl(0 84% 45% / 0.4), 0 4px 12px hsl(0 84% 45% / 0.2);
     
     /* Glassmorphism */
     --glass-bg: hsl(0 0% 100% / 0.7);

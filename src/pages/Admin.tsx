@@ -477,7 +477,7 @@ const Admin = () => {
                     <Label htmlFor="venue">Venue</Label>
                     <Input id="venue" name="venue" />
                   </div>
-                  <Button type="submit">Create Event</Button>
+                  <Button type="submit" variant="3d">Create Event</Button>
                 </form>
               </CardContent>
             </Card>
@@ -523,7 +523,7 @@ const Admin = () => {
                       <Label htmlFor="phone">Phone Number</Label>
                       <Input id="phone" name="phone" type="tel" />
                     </div>
-                    <Button type="submit" disabled={createExecutiveMutation.isPending}>
+                    <Button type="submit" variant="3d" disabled={createExecutiveMutation.isPending}>
                       <Upload className="h-4 w-4 mr-2" />
                       {createExecutiveMutation.isPending ? "Creating..." : "Add Executive"}
                     </Button>
@@ -553,7 +553,7 @@ const Admin = () => {
                             <p className="text-sm text-muted-foreground">{exec.email}</p>
                           </div>
                           <Button
-                            variant="destructive"
+                            variant="3d-destructive"
                             size="icon"
                             onClick={() => deleteExecutiveMutation.mutate(exec.id)}
                             disabled={deleteExecutiveMutation.isPending}
@@ -588,7 +588,7 @@ const Admin = () => {
                       <Label htmlFor="description">Description</Label>
                       <Textarea id="description" name="description" />
                     </div>
-                    <Button type="submit">Create Category</Button>
+                    <Button type="submit" variant="3d">Create Category</Button>
                   </form>
                 </CardContent>
               </Card>
@@ -610,7 +610,7 @@ const Admin = () => {
                             )}
                           </div>
                           <Button
-                            variant="destructive"
+                            variant="3d-destructive"
                             size="icon"
                             onClick={() => {
                               if (confirm(`Are you sure you want to delete "${category.name}"?`)) {
@@ -671,7 +671,7 @@ const Admin = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button type="submit" disabled={uploadImageMutation.isPending}>
+                    <Button type="submit" variant="3d" disabled={uploadImageMutation.isPending}>
                       <Upload className="h-4 w-4 mr-2" />
                       {uploadImageMutation.isPending ? "Uploading..." : "Upload Image"}
                     </Button>
@@ -726,12 +726,12 @@ const Admin = () => {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button type="submit" disabled={updateUnionInfoMutation.isPending}>
+                      <Button type="submit" variant="3d" disabled={updateUnionInfoMutation.isPending}>
                         Update Total Members
                       </Button>
                       <Button 
                         type="button" 
-                        variant="outline"
+                        variant="3d-secondary"
                         onClick={handleRefreshActiveMembers}
                         disabled={refreshActiveMembersMutation.isPending}
                       >
