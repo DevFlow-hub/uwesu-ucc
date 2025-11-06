@@ -23,6 +23,7 @@ export const WhatsAppNotificationSender = () => {
         .from("profiles")
         .select("id, full_name, whatsapp_number, country_code")
         .not("whatsapp_number", "is", null)
+        .not("user_id", "is", null)
         .order("full_name");
       if (error) throw error;
       return data;
@@ -36,6 +37,7 @@ export const WhatsAppNotificationSender = () => {
         .from("profiles")
         .select("id, full_name, email")
         .not("email", "is", null)
+        .not("user_id", "is", null)
         .order("full_name");
       if (error) throw error;
       return data;
