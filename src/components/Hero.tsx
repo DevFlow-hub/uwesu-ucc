@@ -40,7 +40,7 @@ const Hero = () => {
       {/* Content */}
       <div className="container mx-auto px-4 z-10 text-center text-primary-foreground">
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-          <div className="inline-flex items-center gap-2 glass px-6 py-3 rounded-full border-2 border-secondary/50 shadow-elevated hover:shadow-glow transition-smooth hover:scale-105 cursor-default">
+          <div className="inline-flex items-center gap-2 glass px-6 py-3 rounded-full border-2 border-secondary/50 shadow-elevated hover:shadow-glow transition-smooth hover:scale-105 cursor-default animate-glow-pulse">
             <Users className="h-5 w-5 text-secondary animate-pulse" />
             <span className="text-sm font-semibold tracking-wide text-secondary">Stronger Together</span>
           </div>
@@ -77,7 +77,7 @@ const Hero = () => {
             <Button 
               size="lg" 
               variant="3d-secondary"
-              className="text-lg px-10 py-6 font-semibold rounded-xl"
+              className="text-lg px-10 py-6 font-semibold rounded-xl animate-glow-pulse"
               onClick={() => {
                 const element = document.getElementById("about");
                 element?.scrollIntoView({ behavior: "smooth" });
