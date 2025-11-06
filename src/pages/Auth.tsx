@@ -56,7 +56,21 @@ const Auth = () => {
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          // If user not found, redirect to signup
+          if (error.message.includes("Invalid login credentials") || 
+              error.message.includes("Email not confirmed") ||
+              error.message.includes("User not found")) {
+            toast({
+              title: "Account Not Found",
+              description: "No account exists with this email. Please sign up instead.",
+            });
+            setMode("signup");
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
 
         if (data.user) {
           sessionStorage.setItem('just-logged-in', 'true');
@@ -257,23 +271,28 @@ const Auth = () => {
 
               <div className="text-center pt-4 space-y-2">
                 {mode === "reset" ? (
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={() => setMode("login")}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="w-full"
                   >
                     Back to sign in
-                  </button>
+                  </Button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {mode === "login"
-                      ? "Don't have an account? Sign up"
-                      : "Already have an account? Sign in"}
-                  </button>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      {mode === "login" ? "Don't have an account?" : "Already have an account?"}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                      className="w-full"
+                    >
+                      {mode === "login" ? "Sign Up" : "Sign In"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </form>
