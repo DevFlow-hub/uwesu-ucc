@@ -37,7 +37,6 @@ export function UserProfileEditor({ profile, open, onClose, onSuccess }: UserPro
     whatsapp_number: "",
     country_code: "+1",
     bio: "",
-    designation: "",
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +49,6 @@ export function UserProfileEditor({ profile, open, onClose, onSuccess }: UserPro
         whatsapp_number: profile.whatsapp_number || "",
         country_code: profile.country_code || "+1",
         bio: profile.bio || "",
-        designation: profile.designation || "",
       });
     }
   }, [profile]);
@@ -91,7 +89,6 @@ export function UserProfileEditor({ profile, open, onClose, onSuccess }: UserPro
           whatsapp_number: formData.whatsapp_number,
           country_code: formData.country_code,
           bio: formData.bio,
-          designation: formData.designation,
           avatar_url: avatarUrl,
         })
         .eq("id", profile.id);
@@ -172,15 +169,6 @@ export function UserProfileEditor({ profile, open, onClose, onSuccess }: UserPro
                 id="country_code"
                 value={formData.country_code}
                 onChange={(e) => setFormData({ ...formData, country_code: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="designation">Designation</Label>
-              <Input
-                id="designation"
-                value={formData.designation}
-                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
               />
             </div>
           </div>

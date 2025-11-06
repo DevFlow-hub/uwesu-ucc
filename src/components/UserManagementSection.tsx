@@ -197,10 +197,6 @@ export function UserManagementSection() {
                             <span className="text-muted-foreground">Country Code:</span>
                             <span className="ml-2">{profile.country_code || "N/A"}</span>
                           </div>
-                          <div>
-                            <span className="text-muted-foreground">Designation:</span>
-                            <span className="ml-2">{profile.designation || "N/A"}</span>
-                          </div>
                           {profile.bio && (
                             <div className="col-span-full">
                               <span className="text-muted-foreground">Bio:</span>
