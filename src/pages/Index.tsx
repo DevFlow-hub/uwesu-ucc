@@ -43,7 +43,20 @@ const Index = () => {
   }, [navigate]);
 
   if (loading || !isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-24 space-y-8">
+          <div className="h-96 bg-muted animate-pulse rounded-lg" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-32 bg-muted animate-pulse rounded-lg" />
+            <div className="h-32 bg-muted animate-pulse rounded-lg" />
+            <div className="h-32 bg-muted animate-pulse rounded-lg" />
+          </div>
+          <div className="h-64 bg-muted animate-pulse rounded-lg" />
+        </div>
+      </div>
+    );
   }
 
   return (

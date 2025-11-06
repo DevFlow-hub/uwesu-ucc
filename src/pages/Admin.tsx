@@ -467,7 +467,22 @@ const Admin = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-24 space-y-8">
+          <div className="h-16 w-96 bg-muted animate-pulse rounded-lg" />
+          <div className="space-y-6">
+            <div className="h-12 bg-muted animate-pulse rounded-lg" />
+            <div className="grid gap-6 md:grid-cols-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-80 bg-muted animate-pulse rounded-lg" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!isAdmin) return null;

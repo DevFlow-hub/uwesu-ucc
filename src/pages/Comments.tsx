@@ -137,7 +137,20 @@ const Comments = () => {
   });
 
   if (loading) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-24 space-y-6">
+          <div className="h-12 w-64 bg-muted animate-pulse rounded-lg mx-auto" />
+          <div className="max-w-4xl mx-auto space-y-4">
+            <div className="h-40 bg-muted animate-pulse rounded-lg" />
+            <div className="h-32 bg-muted animate-pulse rounded-lg" />
+            <div className="h-32 bg-muted animate-pulse rounded-lg" />
+            <div className="h-32 bg-muted animate-pulse rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = (e: React.FormEvent) => {

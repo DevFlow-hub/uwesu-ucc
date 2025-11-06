@@ -138,7 +138,20 @@ const Events = () => {
 
   // Now conditional return is safe - all hooks have been called
   if (loading) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-24 space-y-8">
+          <div className="h-16 w-80 bg-muted animate-pulse rounded-lg mx-auto" />
+          <div className="grid gap-6 md:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   const handleDeleteClick = (eventId: string) => {
