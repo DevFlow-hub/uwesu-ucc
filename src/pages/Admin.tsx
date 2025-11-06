@@ -20,6 +20,7 @@ import { Upload, Trash2, Edit, GripVertical } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ExecutiveEditor } from "@/components/ExecutiveEditor";
+import { UserManagementSection } from "@/components/UserManagementSection";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -504,12 +505,15 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="events" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto p-1 bg-muted/50 rounded-xl">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 h-auto p-1 bg-muted/50 rounded-xl">
             <TabsTrigger value="events" className="data-[state=active]:bg-background data-[state=active]:shadow-md">
               Events
             </TabsTrigger>
             <TabsTrigger value="executives" className="data-[state=active]:bg-background data-[state=active]:shadow-md">
               Executives
+            </TabsTrigger>
+            <TabsTrigger value="members" className="data-[state=active]:bg-background data-[state=active]:shadow-md">
+              Members
             </TabsTrigger>
             <TabsTrigger value="gallery" className="data-[state=active]:bg-background data-[state=active]:shadow-md">
               Gallery
@@ -670,6 +674,10 @@ const Admin = () => {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
+          </TabsContent>
+
+          <TabsContent value="members" className="space-y-6 pt-2">
+            <UserManagementSection />
           </TabsContent>
 
           <TabsContent value="gallery" className="space-y-6 pt-2">
