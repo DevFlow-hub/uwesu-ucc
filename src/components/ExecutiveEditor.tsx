@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { ImageCropper } from "@/components/ImageCropper";
 
 interface Executive {
   id: string;
@@ -34,6 +35,8 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   // Update form data when executive changes
   useEffect(() => {
@@ -46,8 +49,27 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
         bio: executive.bio || "",
       });
       setAvatarFile(null);
+      setImagePreview(null);
+      setShowCropper(false);
     }
   }, [executive]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+        setShowCropper(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const croppedFile = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
+    setAvatarFile(croppedFile);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,8 +147,13 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
                 id="edit-avatar"
                 type="file"
                 accept="image/*"
-                onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                onChange={handleImageSelect}
               />
+              {avatarFile && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Image cropped and ready to upload
+                </p>
+              )}
             </div>
           </div>
 
@@ -194,6 +221,19 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
             </Button>
           </div>
         </form>
+
+        {imagePreview && (
+          <ImageCropper
+            image={imagePreview}
+            open={showCropper}
+            onClose={() => {
+              setShowCropper(false);
+              setImagePreview(null);
+            }}
+            onComplete={handleCropComplete}
+            aspectRatio={1}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
