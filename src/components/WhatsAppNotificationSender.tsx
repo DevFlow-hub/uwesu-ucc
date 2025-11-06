@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, ExternalLink, Mail, Send } from "lucide-react";
+import { MessageSquare, ExternalLink, Mail, Send, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -9,19 +9,47 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const WhatsAppNotificationSender = () => {
   const [message, setMessage] = useState<string>("");
   const [emailSubject, setEmailSubject] = useState<string>("");
+  const [emailPreview, setEmailPreview] = useState<string>("");
   const [channel, setChannel] = useState<"whatsapp" | "email">("whatsapp");
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    action: () => void;
+    memberName: string;
+    channel: "whatsapp" | "email";
+  }>({ open: false, action: () => {}, memberName: "", channel: "whatsapp" });
+  const [blockedDialog, setBlockedDialog] = useState<{
+    open: boolean;
+    memberName: string;
+  }>({ open: false, memberName: "" });
 
   const { data: whatsappMembers } = useQuery({
     queryKey: ["members-with-whatsapp"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, whatsapp_number, country_code")
+        .select("id, full_name, whatsapp_number, country_code, blocked")
         .not("whatsapp_number", "is", null)
         .not("user_id", "is", null)
         .order("full_name");
@@ -35,7 +63,7 @@ export const WhatsAppNotificationSender = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name, email, blocked")
         .not("email", "is", null)
         .not("user_id", "is", null)
         .order("full_name");
@@ -44,7 +72,12 @@ export const WhatsAppNotificationSender = () => {
     },
   });
 
-  const openWhatsApp = (whatsappNumber: string, countryCode: string, memberName: string) => {
+  const openWhatsApp = (whatsappNumber: string, countryCode: string, memberName: string, isBlocked: boolean) => {
+    if (isBlocked) {
+      setBlockedDialog({ open: true, memberName });
+      return;
+    }
+
     if (!message.trim()) {
       toast.error("Please enter a message first");
       return;
@@ -59,7 +92,12 @@ export const WhatsAppNotificationSender = () => {
     toast.success(`Opening WhatsApp for ${memberName}`);
   };
 
-  const sendEmail = async (email: string, memberName: string) => {
+  const sendEmail = async (email: string, memberName: string, isBlocked: boolean) => {
+    if (isBlocked) {
+      setBlockedDialog({ open: true, memberName });
+      return;
+    }
+
     if (!message.trim() || !emailSubject.trim()) {
       toast.error("Please enter both subject and message");
       return;
@@ -67,6 +105,7 @@ export const WhatsAppNotificationSender = () => {
 
     setSendingEmail(email);
     try {
+      const emailBody = emailPreview || message;
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
           to: email,
@@ -75,7 +114,7 @@ export const WhatsAppNotificationSender = () => {
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #333;">UWESU-UCC Union</h2>
               <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="white-space: pre-wrap; color: #333; line-height: 1.6;">${message}</p>
+                <p style="white-space: pre-wrap; color: #333; line-height: 1.6;">${emailBody}</p>
               </div>
               <p style="color: #666; font-size: 12px; margin-top: 20px;">
                 This message was sent from UWESU-UCC Union Administration
@@ -163,11 +202,32 @@ export const WhatsAppNotificationSender = () => {
                 )}
                 <div>
                   {channel === "email" && (
-                    <p className="text-xs text-muted-foreground font-semibold mb-1">Body:</p>
+                    <>
+                      <p className="text-xs text-muted-foreground font-semibold mb-1">Body:</p>
+                      <Textarea
+                        value={emailPreview || message}
+                        onChange={(e) => setEmailPreview(e.target.value)}
+                        rows={6}
+                        className="text-sm font-sans"
+                        placeholder="Edit email preview..."
+                      />
+                      {emailPreview && emailPreview !== message && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEmailPreview("")}
+                          className="mt-2"
+                        >
+                          Reset to original
+                        </Button>
+                      )}
+                    </>
                   )}
-                  <pre className="text-sm whitespace-pre-wrap font-sans">
-                    {message}
-                  </pre>
+                  {channel === "whatsapp" && (
+                    <pre className="text-sm whitespace-pre-wrap font-sans">
+                      {message}
+                    </pre>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -188,43 +248,78 @@ export const WhatsAppNotificationSender = () => {
           <CardContent>
             {members && members.length > 0 ? (
               <div className="space-y-3">
-                {members.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-semibold">{member.full_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {channel === "whatsapp" 
-                          ? `${(member as any).country_code} ${(member as any).whatsapp_number}`
-                          : (member as any).email}
-                      </p>
+                {members.map((member) => {
+                  const isBlocked = (member as any).blocked;
+                  return (
+                    <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold">{member.full_name}</p>
+                          {isBlocked && (
+                            <span className="text-xs bg-destructive text-destructive-foreground px-2 py-0.5 rounded">
+                              Blocked
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {channel === "whatsapp" 
+                            ? `${(member as any).country_code} ${(member as any).whatsapp_number}`
+                            : (member as any).email}
+                        </p>
+                      </div>
+                      {channel === "whatsapp" ? (
+                        <Button
+                          onClick={() => {
+                            const action = () => openWhatsApp(
+                              (member as any).whatsapp_number!, 
+                              (member as any).country_code!, 
+                              member.full_name,
+                              isBlocked
+                            );
+                            if (isBlocked) {
+                              action();
+                            } else {
+                              setConfirmDialog({
+                                open: true,
+                                action,
+                                memberName: member.full_name,
+                                channel: "whatsapp"
+                              });
+                            }
+                          }}
+                          variant="default"
+                          size="sm"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Send WhatsApp
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => {
+                            const action = () => sendEmail((member as any).email!, member.full_name, isBlocked);
+                            if (isBlocked) {
+                              action();
+                            } else {
+                              setConfirmDialog({
+                                open: true,
+                                action,
+                                memberName: member.full_name,
+                                channel: "email"
+                              });
+                            }
+                          }}
+                          variant="default"
+                          size="sm"
+                          disabled={sendingEmail === (member as any).email}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          {sendingEmail === (member as any).email ? "Sending..." : "Send Email"}
+                        </Button>
+                      )}
                     </div>
-                    {channel === "whatsapp" ? (
-                      <Button
-                        onClick={() => openWhatsApp(
-                          (member as any).whatsapp_number!, 
-                          (member as any).country_code!, 
-                          member.full_name
-                        )}
-                        variant="default"
-                        size="sm"
-                      >
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Send WhatsApp
-                        <ExternalLink className="h-3 w-3 ml-1" />
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => sendEmail((member as any).email!, member.full_name)}
-                        variant="default"
-                        size="sm"
-                        disabled={sendingEmail === (member as any).email}
-                      >
-                        <Send className="h-4 w-4 mr-2" />
-                        {sendingEmail === (member as any).email ? "Sending..." : "Send Email"}
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-center text-muted-foreground py-8">
@@ -236,6 +331,44 @@ export const WhatsAppNotificationSender = () => {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Send</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to send this {confirmDialog.channel === "whatsapp" ? "WhatsApp message" : "email"} to {confirmDialog.memberName}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              confirmDialog.action();
+              setConfirmDialog({ ...confirmDialog, open: false });
+            }}>
+              Send
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={blockedDialog.open} onOpenChange={(open) => setBlockedDialog({ ...blockedDialog, open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              User Blocked
+            </DialogTitle>
+            <DialogDescription>
+              Cannot send message to {blockedDialog.memberName} because this user is blocked. 
+              Please unblock the user first if you want to send them messages.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => setBlockedDialog({ ...blockedDialog, open: false })}>
+            Close
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
