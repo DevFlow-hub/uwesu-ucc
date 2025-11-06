@@ -15,18 +15,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Upload, Trash2 } from "lucide-react";
+import { Upload, Trash2, Edit, GripVertical } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ExecutiveEditor } from "@/components/ExecutiveEditor";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const Admin = () => {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [editingExecutive, setEditingExecutive] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     checkAuth();
@@ -186,6 +198,7 @@ const Admin = () => {
         .from("profiles")
         .select("*")
         .eq("is_executive", true)
+        .order("display_order", { ascending: true, nullsFirst: false })
         .order("designation");
       if (error) throw error;
       return data;
@@ -416,6 +429,41 @@ const Admin = () => {
     refreshActiveMembersMutation.mutate();
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || !executives) return;
+
+    const oldIndex = executives.findIndex((exec) => exec.id === active.id);
+    const newIndex = executives.findIndex((exec) => exec.id === over.id);
+
+    const reorderedExecutives = arrayMove(executives, oldIndex, newIndex);
+
+    // Optimistically update the UI
+    queryClient.setQueryData(["executives"], reorderedExecutives);
+
+    // Update display_order in database
+    try {
+      const updates = reorderedExecutives.map((exec, index) => 
+        supabase
+          .from("profiles")
+          .update({ display_order: index })
+          .eq("id", exec.id)
+      );
+
+      await Promise.all(updates);
+      
+      toast({ title: "Order updated successfully" });
+    } catch (error: any) {
+      toast({
+        title: "Failed to update order",
+        description: error.message,
+        variant: "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: ["executives"] });
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -534,40 +582,47 @@ const Admin = () => {
               <Card className="border-2">
                 <CardHeader>
                   <CardTitle>Current Executives</CardTitle>
-                  <CardDescription>Manage existing executive profiles</CardDescription>
+                  <CardDescription>Manage and reorder executive profiles by dragging</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {executives && executives.length > 0 ? (
-                    <div className="space-y-4">
-                      {executives.map((exec) => (
-                        <div key={exec.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                          <Avatar className="h-16 w-16">
-                            <AvatarImage src={exec.avatar_url || undefined} alt={exec.full_name} />
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              {exec.full_name.split(" ").map((n: string) => n[0]).join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{exec.full_name}</h3>
-                            <p className="text-sm text-muted-foreground">{exec.designation}</p>
-                            <p className="text-sm text-muted-foreground">{exec.email}</p>
-                          </div>
-                          <Button
-                            variant="3d-destructive"
-                            size="icon"
-                            onClick={() => deleteExecutiveMutation.mutate(exec.id)}
-                            disabled={deleteExecutiveMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={executives.map((exec) => exec.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-4">
+                          {executives.map((exec) => (
+                            <SortableExecutiveItem
+                              key={exec.id}
+                              executive={exec}
+                              onEdit={() => setEditingExecutive(exec)}
+                              onDelete={() => deleteExecutiveMutation.mutate(exec.id)}
+                              isDeleting={deleteExecutiveMutation.isPending}
+                            />
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </SortableContext>
+                    </DndContext>
                   ) : (
                     <p className="text-muted-foreground">No executives added yet</p>
                   )}
                 </CardContent>
               </Card>
+              
+              <ExecutiveEditor
+                executive={editingExecutive}
+                open={!!editingExecutive}
+                onClose={() => setEditingExecutive(null)}
+                onSuccess={() => {
+                  queryClient.invalidateQueries({ queryKey: ["executives"] });
+                  toast({ title: "Executive updated successfully" });
+                }}
+              />
             </div>
           </TabsContent>
 
@@ -747,6 +802,79 @@ const Admin = () => {
       </main>
 
       <Footer />
+    </div>
+  );
+};
+
+interface SortableExecutiveItemProps {
+  executive: any;
+  onEdit: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
+}
+
+const SortableExecutiveItem = ({ executive, onEdit, onDelete, isDeleting }: SortableExecutiveItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: executive.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-4 border rounded-lg bg-card hover:shadow-md transition-shadow"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <GripVertical className="h-5 w-5" />
+      </div>
+      
+      <Avatar className="h-16 w-16">
+        <AvatarImage src={executive.avatar_url || undefined} alt={executive.full_name} />
+        <AvatarFallback className="bg-primary/10 text-primary">
+          {executive.full_name.split(" ").map((n: string) => n[0]).join("")}
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className="flex-1">
+        <h3 className="font-semibold">{executive.full_name}</h3>
+        <p className="text-sm text-muted-foreground">{executive.designation}</p>
+        <p className="text-sm text-muted-foreground">{executive.email}</p>
+      </div>
+      
+      <div className="flex gap-2">
+        <Button
+          variant="3d-secondary"
+          size="icon"
+          onClick={onEdit}
+          title="Edit executive"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="3d-destructive"
+          size="icon"
+          onClick={onDelete}
+          disabled={isDeleting}
+          title="Delete executive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };

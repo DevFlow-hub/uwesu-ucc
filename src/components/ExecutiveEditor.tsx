@@ -1,0 +1,186 @@
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Executive {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  designation: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+}
+
+interface ExecutiveEditorProps {
+  executive: Executive | null;
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: ExecutiveEditorProps) => {
+  const [formData, setFormData] = useState({
+    full_name: executive?.full_name || "",
+    email: executive?.email || "",
+    phone: executive?.phone || "",
+    designation: executive?.designation || "",
+    bio: executive?.bio || "",
+  });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!executive) return;
+
+    setIsSubmitting(true);
+    try {
+      let avatar_url = executive.avatar_url;
+
+      // Upload new avatar if provided
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+        
+        avatar_url = publicUrl;
+      }
+
+      // Update profile
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone || null,
+          designation: formData.designation || null,
+          bio: formData.bio || null,
+          avatar_url,
+        })
+        .eq("id", executive.id);
+
+      if (error) throw error;
+
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      console.error("Error updating executive:", error);
+      alert("Failed to update executive: " + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!executive) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Executive Profile</DialogTitle>
+          <DialogDescription>Update executive information and profile details</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={executive.avatar_url || undefined} alt={executive.full_name} />
+              <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                {executive.full_name.split(" ").map(n => n[0]).join("")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <Label htmlFor="edit-avatar">Change Profile Picture</Label>
+              <Input
+                id="edit-avatar"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            <div>
+              <Label htmlFor="edit-full-name">Full Name *</Label>
+              <Input
+                id="edit-full-name"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-designation">Position/Designation *</Label>
+              <Input
+                id="edit-designation"
+                value={formData.designation || ""}
+                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                placeholder="e.g., President, Secretary, Treasurer"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-email">Email *</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Input
+                id="edit-phone"
+                type="tel"
+                value={formData.phone || ""}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-bio">Bio</Label>
+              <Textarea
+                id="edit-bio"
+                value={formData.bio || ""}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                placeholder="Brief biography or description"
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="3d" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};

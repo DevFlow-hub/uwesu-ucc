@@ -23,6 +23,7 @@ const Executives = () => {
         .from("profiles")
         .select("*")
         .eq("is_executive", true)
+        .order("display_order", { ascending: true, nullsFirst: false })
         .order("designation");
 
       if (data) {
