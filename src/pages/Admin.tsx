@@ -10,6 +10,7 @@ import { RealtimeNotifications } from "@/components/RealtimeNotifications";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [editingExecutive, setEditingExecutive] = useState<any>(null);
+  const [deletingExecutive, setDeletingExecutive] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -601,7 +603,7 @@ const Admin = () => {
                               key={exec.id}
                               executive={exec}
                               onEdit={() => setEditingExecutive(exec)}
-                              onDelete={() => deleteExecutiveMutation.mutate(exec.id)}
+                              onDelete={() => setDeletingExecutive(exec)}
                               isDeleting={deleteExecutiveMutation.isPending}
                             />
                           ))}
@@ -623,6 +625,31 @@ const Admin = () => {
                   toast({ title: "Executive updated successfully" });
                 }}
               />
+              
+              <AlertDialog open={!!deletingExecutive} onOpenChange={() => setDeletingExecutive(null)}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Executive Profile?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to remove <strong>{deletingExecutive?.full_name}</strong> ({deletingExecutive?.designation}) from the executives list? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        if (deletingExecutive) {
+                          deleteExecutiveMutation.mutate(deletingExecutive.id);
+                          setDeletingExecutive(null);
+                        }
+                      }}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </TabsContent>
 
