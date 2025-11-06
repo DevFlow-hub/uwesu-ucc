@@ -65,7 +65,7 @@ const Executives = () => {
             {executives.map((exec) => (
               <Card
                 key={exec.id}
-                className="group overflow-hidden hover:shadow-elevated transition-all duration-300 border-2 border-border hover:border-secondary/50 hover:scale-105 bg-gradient-card"
+                className="group overflow-hidden hover:shadow-glow transition-smooth border border-border hover:border-secondary/40 hover:-translate-y-2 bg-card backdrop-blur-sm"
               >
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center">

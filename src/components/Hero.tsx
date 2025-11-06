@@ -40,9 +40,9 @@ const Hero = () => {
       {/* Content */}
       <div className="container mx-auto px-4 z-10 text-center text-primary-foreground">
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-          <div className="inline-flex items-center gap-2 bg-secondary/20 backdrop-blur-md px-6 py-3 rounded-full border border-secondary/40 shadow-glow animate-pulse-glow">
+          <div className="inline-flex items-center gap-2 glass px-6 py-3 rounded-full border-2 border-secondary/50 shadow-glow animate-pulse-glow">
             <Users className="h-5 w-5 text-secondary" />
-            <span className="text-sm font-semibold tracking-wide">Stronger Together</span>
+            <span className="text-sm font-semibold tracking-wide text-primary-foreground">Stronger Together</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-extrabold leading-tight tracking-tight animate-bounce-in">
@@ -66,7 +66,7 @@ const Hero = () => {
             {!isAuthenticated && (
               <Button 
                 size="lg" 
-                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground text-lg px-10 py-6 shadow-card hover:shadow-elevated transition-all duration-300 hover:scale-105 font-semibold rounded-lg"
+                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground text-lg px-10 py-6 shadow-elevated hover:shadow-glow transition-smooth hover:scale-105 font-semibold rounded-xl"
                 onClick={() => navigate("/auth")}
               >
                 Join Our Union
@@ -76,7 +76,7 @@ const Hero = () => {
             <Button 
               size="lg" 
               variant="outline" 
-              className="bg-background/10 hover:bg-background/20 text-primary-foreground border-2 border-background/30 hover:border-background/50 text-lg px-10 py-6 backdrop-blur-md transition-all duration-300 hover:scale-105 font-semibold rounded-lg"
+              className="glass text-primary-foreground border-2 border-primary-foreground/30 hover:border-primary-foreground/60 text-lg px-10 py-6 transition-smooth hover:scale-105 font-semibold rounded-xl"
               onClick={() => {
                 const element = document.getElementById("about");
                 element?.scrollIntoView({ behavior: "smooth" });
