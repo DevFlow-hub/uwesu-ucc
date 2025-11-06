@@ -101,24 +101,13 @@ const Auth = () => {
           options: {
             data: {
               full_name: fullName,
+              whatsapp_number: number,
+              country_code: countryCode,
             },
           },
         });
 
         if (error) throw error;
-
-        // Update profile with WhatsApp number
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({
-              whatsapp_number: number,
-              country_code: countryCode,
-            })
-            .eq('user_id', data.user.id);
-
-          if (profileError) console.error('Profile update error:', profileError);
-        }
 
         sessionStorage.setItem('just-logged-in', 'true');
         window.dispatchEvent(new Event('user-logged-in'));
