@@ -41,6 +41,7 @@ export function UserManagementSection() {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
+        .eq("is_executive", false)
         .order("joined_at", { ascending: false });
 
       if (error) throw error;
@@ -84,7 +85,7 @@ export function UserManagementSection() {
     return (
       profile.full_name?.toLowerCase().includes(query) ||
       profile.email?.toLowerCase().includes(query) ||
-      profile.phone?.toLowerCase().includes(query)
+      profile.whatsapp_number?.toLowerCase().includes(query)
     );
   });
 
@@ -117,7 +118,7 @@ export function UserManagementSection() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, or phone..."
+                placeholder="Search by name, email, or WhatsApp..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -188,10 +189,6 @@ export function UserManagementSection() {
                       {/* Expanded Details */}
                       {isExpanded && (
                         <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Phone:</span>
-                            <span className="ml-2">{maskSensitiveData(profile.phone)}</span>
-                          </div>
                           <div>
                             <span className="text-muted-foreground">WhatsApp:</span>
                             <span className="ml-2">{maskSensitiveData(profile.whatsapp_number)}</span>

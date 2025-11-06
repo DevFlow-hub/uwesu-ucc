@@ -34,7 +34,6 @@ export function UserProfileEditor({ profile, open, onClose, onSuccess }: UserPro
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
-    phone: "",
     whatsapp_number: "",
     country_code: "+1",
     bio: "",
@@ -48,7 +47,6 @@ export function UserProfileEditor({ profile, open, onClose, onSuccess }: UserPro
       setFormData({
         full_name: profile.full_name || "",
         email: profile.email || "",
-        phone: profile.phone || "",
         whatsapp_number: profile.whatsapp_number || "",
         country_code: profile.country_code || "+1",
         bio: profile.bio || "",
@@ -90,7 +88,6 @@ export function UserProfileEditor({ profile, open, onClose, onSuccess }: UserPro
         .update({
           full_name: formData.full_name,
           email: formData.email,
-          phone: formData.phone,
           whatsapp_number: formData.whatsapp_number,
           country_code: formData.country_code,
           bio: formData.bio,
@@ -161,20 +158,11 @@ export function UserProfileEditor({ profile, open, onClose, onSuccess }: UserPro
             </div>
 
             <div>
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="whatsapp">WhatsApp Number</Label>
               <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="designation">Designation</Label>
-              <Input
-                id="designation"
-                value={formData.designation}
-                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                id="whatsapp"
+                value={formData.whatsapp_number}
+                onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
               />
             </div>
 
@@ -188,11 +176,11 @@ export function UserProfileEditor({ profile, open, onClose, onSuccess }: UserPro
             </div>
 
             <div>
-              <Label htmlFor="whatsapp">WhatsApp Number</Label>
+              <Label htmlFor="designation">Designation</Label>
               <Input
-                id="whatsapp"
-                value={formData.whatsapp_number}
-                onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
+                id="designation"
+                value={formData.designation}
+                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
               />
             </div>
           </div>
