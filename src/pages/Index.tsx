@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { RealtimeNotifications } from "@/components/RealtimeNotifications";
 import { NotificationButton } from "@/components/NotificationButton";
+import BackToTop from "@/components/BackToTop";
 import { trackActivity } from "@/lib/activity-tracker";
 
 const Index = () => {
@@ -68,6 +69,7 @@ const Index = () => {
       <About />
       <Executives />
       <Footer />
+      <BackToTop />
       <PushNotificationPrompt />
       <RealtimeNotifications />
     </div>
