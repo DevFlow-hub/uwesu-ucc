@@ -83,14 +83,19 @@ const Auth = () => {
         });
         navigate(from);
       } else {
-        if (!whatsappNumber) {
-          throw new Error("Please enter your WhatsApp number");
+        // Validate all required fields for signup
+        if (!fullName.trim()) {
+          throw new Error("Please enter your full name");
+        }
+        
+        if (!whatsappNumber || whatsappNumber.length < 10) {
+          throw new Error("Please enter a valid WhatsApp number");
         }
 
         // Extract country code and number from WhatsApp input
         const phoneMatch = whatsappNumber.match(/^\+(\d{1,3})(\d+)$/);
         if (!phoneMatch) {
-          throw new Error("Invalid WhatsApp number format");
+          throw new Error("Please enter a valid WhatsApp number with country code");
         }
         const countryCode = `+${phoneMatch[1]}`;
         const number = phoneMatch[2];
@@ -195,17 +200,18 @@ const Auth = () => {
 
               {mode === "signup" && (
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                  <Label htmlFor="whatsapp">
+                    WhatsApp Number <span className="text-destructive">*</span>
+                  </Label>
                   <PhoneInput
                     international
                     defaultCountry="US"
                     value={whatsappNumber}
                     onChange={(value) => setWhatsappNumber(value || "")}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                    required
                   />
                   <p className="text-xs text-muted-foreground">
-                    We'll send event reminders via WhatsApp. Your number will only be used for union communications.
+                    Required: We'll send event reminders via WhatsApp. Your number will only be used for union communications.
                   </p>
                 </div>
               )}
