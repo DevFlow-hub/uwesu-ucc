@@ -270,22 +270,17 @@ export const WhatsAppNotificationSender = () => {
                       {channel === "whatsapp" ? (
                         <Button
                           onClick={() => {
-                            const action = () => openWhatsApp(
-                              (member as any).whatsapp_number!, 
-                              (member as any).country_code!, 
-                              member.full_name,
-                              isBlocked
-                            );
-                            if (isBlocked) {
-                              action();
-                            } else {
-                              setConfirmDialog({
-                                open: true,
-                                action,
-                                memberName: member.full_name,
-                                channel: "whatsapp"
-                              });
-                            }
+                            setConfirmDialog({
+                              open: true,
+                              action: () => openWhatsApp(
+                                (member as any).whatsapp_number!, 
+                                (member as any).country_code!, 
+                                member.full_name,
+                                isBlocked
+                              ),
+                              memberName: member.full_name,
+                              channel: "whatsapp"
+                            });
                           }}
                           variant="default"
                           size="sm"
@@ -297,17 +292,12 @@ export const WhatsAppNotificationSender = () => {
                       ) : (
                         <Button
                           onClick={() => {
-                            const action = () => sendEmail((member as any).email!, member.full_name, isBlocked);
-                            if (isBlocked) {
-                              action();
-                            } else {
-                              setConfirmDialog({
-                                open: true,
-                                action,
-                                memberName: member.full_name,
-                                channel: "email"
-                              });
-                            }
+                            setConfirmDialog({
+                              open: true,
+                              action: () => sendEmail((member as any).email!, member.full_name, isBlocked),
+                              memberName: member.full_name,
+                              channel: "email"
+                            });
                           }}
                           variant="default"
                           size="sm"
