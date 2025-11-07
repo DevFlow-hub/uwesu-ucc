@@ -41,8 +41,8 @@ const Hero = () => {
       <div className="container mx-auto px-4 z-10 text-center text-primary-foreground">
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
           <div className="inline-flex items-center gap-2 glass px-6 py-3 rounded-full border-2 border-secondary/50 shadow-elevated hover:shadow-glow transition-smooth hover:scale-105 cursor-default animate-glow-pulse">
-            <Users className="h-5 w-5 text-secondary animate-pulse" />
-            <span className="text-sm font-semibold tracking-wide text-secondary">Stronger Together</span>
+            <Users className="h-5 w-5 text-foreground animate-pulse" />
+            <span className="text-sm font-semibold tracking-wide text-foreground">Stronger Together</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-extrabold leading-tight tracking-tight animate-bounce-in">
