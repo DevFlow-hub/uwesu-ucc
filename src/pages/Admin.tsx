@@ -383,7 +383,7 @@ const Admin = () => {
     e.currentTarget.reset();
   };
 
-  const handleImageUpload = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleImageUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
@@ -407,15 +407,21 @@ const Admin = () => {
       return;
     }
 
-    uploadImageMutation.mutate({
-      files,
-      title: formData.get("title"),
-      eventName: formData.get("event_name"),
-      categoryId: selectedCategoryId,
-    });
-    
+    const title = formData.get("title") as string;
+    const eventName = formData.get("event_name") as string;
+    const categoryId = selectedCategoryId;
+
+    // Reset form immediately to prevent re-submission
     e.currentTarget.reset();
     setSelectedCategoryId("");
+
+    // Upload all files
+    uploadImageMutation.mutate({
+      files,
+      title,
+      eventName,
+      categoryId,
+    });
   };
 
   const handleUnionInfoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
