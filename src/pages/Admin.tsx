@@ -147,6 +147,8 @@ const Admin = () => {
     },
   });
 
+  const [uploadForm, setUploadForm] = useState<HTMLFormElement | null>(null);
+
   const uploadImageMutation = useMutation({
     mutationFn: async ({ files, title, eventName, categoryId }: any) => {
       console.log('Uploading files:', files.length);
@@ -157,7 +159,7 @@ const Admin = () => {
         try {
           // Upload file to storage
           const fileExt = file.name.split('.').pop();
-          const fileName = `${Math.random()}.${fileExt}`;
+          const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
           const filePath = `${fileName}`;
 
           const { error: uploadError } = await supabase.storage
@@ -170,7 +172,8 @@ const Admin = () => {
 
           if (uploadError) {
             console.error('Upload error for file:', file.name, uploadError);
-            throw uploadError;
+            results.push({ success: false, file: file.name, error: uploadError });
+            continue;
           }
 
           // Get public URL
@@ -190,7 +193,8 @@ const Admin = () => {
 
           if (dbError) {
             console.error('Database error for file:', file.name, dbError);
-            throw dbError;
+            results.push({ success: false, file: file.name, error: dbError });
+            continue;
           }
           
           results.push({ success: true, file: file.name });
@@ -206,6 +210,13 @@ const Admin = () => {
       queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
       const successCount = results.filter((r: any) => r.success).length;
       const failCount = results.length - successCount;
+      
+      // Reset form after successful upload
+      if (uploadForm) {
+        uploadForm.reset();
+        setSelectedCategoryId("");
+        setUploadForm(null);
+      }
       
       toast({ 
         title: "Upload complete",
@@ -431,11 +442,10 @@ const Admin = () => {
     const eventName = formData.get("event_name") as string;
     const categoryId = selectedCategoryId;
 
-    // Reset form immediately to prevent re-submission
-    e.currentTarget.reset();
-    setSelectedCategoryId("");
+    // Store form reference for resetting after upload
+    setUploadForm(e.currentTarget);
 
-    // Upload all files
+    // Upload all files - form will be reset in onSuccess
     uploadImageMutation.mutate({
       files,
       title,
