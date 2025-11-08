@@ -128,7 +128,9 @@ export const WhatsAppNotificationSender = () => {
       toast.success(`Email sent to ${memberName}`);
     } catch (error: any) {
       console.error('Error sending email:', error);
-      toast.error(`Failed to send email to ${memberName}`);
+      toast.error("User blocked, unblock to send notification", {
+        description: `Cannot send email to ${memberName}`
+      });
     } finally {
       setSendingEmail(null);
     }
