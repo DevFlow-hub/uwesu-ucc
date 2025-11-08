@@ -149,47 +149,67 @@ const Admin = () => {
 
   const uploadImageMutation = useMutation({
     mutationFn: async ({ files, title, eventName, categoryId }: any) => {
-      const uploadPromises = files.map(async (file: File) => {
-        // Upload file to storage with quality preservation
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
+      console.log('Uploading files:', files.length);
+      
+      const results = [];
+      
+      for (const file of files) {
+        try {
+          // Upload file to storage
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          const filePath = `${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('gallery-images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: file.type,
-          });
+          const { error: uploadError } = await supabase.storage
+            .from('gallery-images')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: file.type,
+            });
 
-        if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error('Upload error for file:', file.name, uploadError);
+            throw uploadError;
+          }
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('gallery-images')
-          .getPublicUrl(filePath);
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('gallery-images')
+            .getPublicUrl(filePath);
 
-        // Save metadata to database
-        const { error: dbError } = await supabase
-          .from('gallery_images')
-          .insert({
-            title: title || null,
-            event_name: eventName || null,
-            category_id: categoryId,
-            image_url: publicUrl,
-          });
+          // Save metadata to database
+          const { error: dbError } = await supabase
+            .from('gallery_images')
+            .insert({
+              title: title || null,
+              event_name: eventName || null,
+              category_id: categoryId,
+              image_url: publicUrl,
+            });
 
-        if (dbError) throw dbError;
-      });
-
-      await Promise.all(uploadPromises);
+          if (dbError) {
+            console.error('Database error for file:', file.name, dbError);
+            throw dbError;
+          }
+          
+          results.push({ success: true, file: file.name });
+        } catch (error) {
+          console.error('Failed to upload file:', file.name, error);
+          results.push({ success: false, file: file.name, error });
+        }
+      }
+      
+      return results;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
+      const successCount = results.filter((r: any) => r.success).length;
+      const failCount = results.length - successCount;
+      
       toast({ 
-        title: "Upload successful",
-        description: `${variables.files.length} image(s) uploaded successfully`
+        title: "Upload complete",
+        description: `${successCount} image(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}`
       });
     },
     onError: (error: any) => {
