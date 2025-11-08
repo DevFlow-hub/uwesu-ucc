@@ -174,8 +174,8 @@ const Admin = () => {
         const { error: dbError } = await supabase
           .from('gallery_images')
           .insert({
-            title,
-            event_name: eventName,
+            title: title || null,
+            event_name: eventName || null,
             category_id: categoryId,
             image_url: publicUrl,
           });
@@ -185,9 +185,12 @@ const Admin = () => {
 
       await Promise.all(uploadPromises);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
-      toast({ title: "Images uploaded successfully" });
+      toast({ 
+        title: "Upload successful",
+        description: `${variables.files.length} image(s) uploaded successfully`
+      });
     },
     onError: (error: any) => {
       toast({
@@ -758,8 +761,8 @@ const Admin = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="image-title">Image Title</Label>
-                      <Input id="image-title" name="title" required />
+                      <Label htmlFor="image-title">Image Title (Optional)</Label>
+                      <Input id="image-title" name="title" />
                     </div>
                     <div>
                       <Label htmlFor="event_name">Event Name (Optional)</Label>
