@@ -126,7 +126,7 @@ export type Database = {
           event_name: string | null
           id: string
           image_url: string
-          title: string
+          title: string | null
         }
         Insert: {
           category_id: string
@@ -134,7 +134,7 @@ export type Database = {
           event_name?: string | null
           id?: string
           image_url: string
-          title: string
+          title?: string | null
         }
         Update: {
           category_id?: string
@@ -142,7 +142,7 @@ export type Database = {
           event_name?: string | null
           id?: string
           image_url?: string
-          title?: string
+          title?: string | null
         }
         Relationships: [
           {
