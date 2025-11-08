@@ -205,14 +205,22 @@ export const WhatsAppNotificationSender = () => {
                 <div>
                   {channel === "email" && (
                     <>
-                      <p className="text-xs text-muted-foreground font-semibold mb-1">Body:</p>
-                      <Textarea
-                        value={emailPreview || message}
-                        onChange={(e) => setEmailPreview(e.target.value)}
-                        rows={6}
-                        className="text-sm font-sans"
-                        placeholder="Edit email preview..."
-                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="email-preview" className="text-xs font-semibold">
+                          Email Body (Click to edit)
+                        </Label>
+                        <Textarea
+                          id="email-preview"
+                          value={emailPreview || message}
+                          onChange={(e) => setEmailPreview(e.target.value)}
+                          rows={6}
+                          className="text-sm font-sans border-2 focus:border-primary"
+                          placeholder="Edit email preview..."
+                        />
+                        <p className="text-xs text-muted-foreground italic">
+                          You can edit the email body above before sending
+                        </p>
+                      </div>
                       {emailPreview && emailPreview !== message && (
                         <Button
                           variant="ghost"
