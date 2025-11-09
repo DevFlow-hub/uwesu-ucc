@@ -77,7 +77,7 @@ const Footer = () => {
               <li className="flex items-center gap-2">
                 <Facebook className="h-4 w-4" />
                 <a 
-                  href="https://www.facebook.com/profile.php?id=61571743115019" 
+                  href="https://www.facebook.com/share/1CtHjbJjJs/" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="hover:text-primary-foreground transition-colors"
