@@ -1,4 +1,4 @@
-import { Users, Mail, Phone, MapPin } from "lucide-react";
+import { Users, Mail, Phone, MapPin, Facebook } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Footer = () => {
@@ -64,7 +64,7 @@ const Footer = () => {
             <ul className="space-y-3 text-sm text-primary-foreground/80">
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <span>uwesu-ucc@gmail.com</span>
+                <span>upperweststudentsunionucclocal@gmail.com</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
@@ -73,6 +73,17 @@ const Footer = () => {
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
                 <span>University of Cape Coast, Ghana</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Facebook className="h-4 w-4" />
+                <a 
+                  href="https://www.facebook.com/profile.php?id=61571743115019" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary-foreground transition-colors"
+                >
+                  UWESU UCC
+                </a>
               </li>
             </ul>
           </div>
