@@ -56,6 +56,30 @@ const Footer = () => {
                   Executives
                 </button>
               </li>
+              <li>
+                <button 
+                  onClick={() => navigate('/gallery')} 
+                  className="hover:text-primary-foreground transition-colors text-left"
+                >
+                  Gallery
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => navigate('/events')} 
+                  className="hover:text-primary-foreground transition-colors text-left"
+                >
+                  Events
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => navigate('/comments')} 
+                  className="hover:text-primary-foreground transition-colors text-left"
+                >
+                  Comments
+                </button>
+              </li>
             </ul>
           </div>
           
