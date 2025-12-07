@@ -1,70 +1,64 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-interface SendEmailRequest {
-  to: string;
-  subject: string;
-  html: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { to, subject, html }: SendEmailRequest = await req.json();
+    const { to, subject, html } = await req.json()
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 
-    if (!to || !subject || !html) {
-      throw new Error('Missing required fields: to, subject, and html');
+    console.log('Attempting to send email to:', to)
+    console.log('API Key exists:', !!RESEND_API_KEY)
+
+    if (!RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY not configured')
     }
 
-    const emailResponse = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Union Events <onboarding@resend.dev>',
+        from: 'UWESU-UCC Union <onboarding@resend.dev>',
         to: [to],
-        subject,
-        html,
+        subject: subject,
+        html: html,
       }),
-    });
+    })
 
-    const data = await emailResponse.json();
+    const responseText = await res.text()
+    console.log('Resend response:', responseText)
 
-    if (!emailResponse.ok) {
-      console.error('Resend error:', data);
-      throw new Error(data.message || 'Failed to send email');
+    if (!res.ok) {
+      throw new Error(`Resend API error: ${responseText}`)
     }
 
-    console.log('Email sent successfully:', data.id);
+    const data = JSON.parse(responseText)
 
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  } catch (error) {
+    console.error('Error sending email:', error)
     return new Response(
-      JSON.stringify({ success: true, id: data.id }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-    );
-  } catch (error: any) {
-    console.error('Error in send-email function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
-    );
+    )
   }
-};
-
-serve(handler);
+})

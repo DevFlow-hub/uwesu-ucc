@@ -7,9 +7,10 @@ import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Download, Search, Trash2 } from "lucide-react";
+import { Download, Search, Trash2, X, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const Gallery = () => {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ const Gallery = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [displayCount, setDisplayCount] = useState(9);
   const [loading, setLoading] = useState(true);
+  const [previewImage, setPreviewImage] = useState<any>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -60,18 +63,15 @@ const Gallery = () => {
 
   const deleteImageMutation = useMutation({
     mutationFn: async (imageData: { id: string; imageUrl: string }) => {
-      // Extract file path from URL
       const urlParts = imageData.imageUrl.split("/");
       const filePath = urlParts[urlParts.length - 1];
 
-      // Delete from storage
       const { error: storageError } = await supabase.storage
         .from("gallery-images")
         .remove([filePath]);
 
       if (storageError) throw storageError;
 
-      // Delete from database
       const { error: dbError } = await supabase
         .from("gallery_images")
         .delete()
@@ -85,6 +85,7 @@ const Gallery = () => {
         title: "Success",
         description: "Image deleted successfully",
       });
+      setPreviewImage(null);
     },
     onError: (error: Error) => {
       toast({
@@ -126,7 +127,24 @@ const Gallery = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Now conditional return is safe - all hooks have been called
+  // Keyboard navigation for image preview
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!previewImage) return;
+
+      if (e.key === "ArrowLeft") {
+        handlePrevImage();
+      } else if (e.key === "ArrowRight") {
+        handleNextImage();
+      } else if (e.key === "Escape") {
+        setPreviewImage(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewImage, currentImageIndex, images]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -146,11 +164,9 @@ const Gallery = () => {
 
   const handleDownload = async (imageUrl: string, title: string) => {
     try {
-      // Fetch the original image
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       
-      // Create an image element to get dimensions
       const img = new Image();
       const imgUrl = URL.createObjectURL(blob);
       
@@ -160,11 +176,9 @@ const Gallery = () => {
         img.src = imgUrl;
       });
       
-      // Create canvas to compress image while maintaining quality
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       
-      // Set max dimensions while maintaining aspect ratio
       const maxWidth = 1920;
       const maxHeight = 1920;
       let width = img.width;
@@ -179,14 +193,12 @@ const Gallery = () => {
       canvas.width = width;
       canvas.height = height;
       
-      // Draw image with high quality
       if (ctx) {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, width, height);
       }
       
-      // Convert to blob with optimized quality (0.92 provides excellent quality with smaller file size)
       canvas.toBlob(
         (compressedBlob) => {
           if (compressedBlob) {
@@ -196,7 +208,6 @@ const Gallery = () => {
             link.download = `${title}.jpg`;
             link.click();
             
-            // Clean up
             window.URL.revokeObjectURL(url);
             window.URL.revokeObjectURL(imgUrl);
           }
@@ -204,6 +215,11 @@ const Gallery = () => {
         "image/jpeg",
         0.92
       );
+
+      toast({
+        title: "Success",
+        description: "Image downloaded successfully",
+      });
     } catch (error) {
       toast({
         title: "Download failed",
@@ -219,14 +235,35 @@ const Gallery = () => {
     }
   };
 
+  const handleImageClick = (image: any, index: number) => {
+    setPreviewImage(image);
+    setCurrentImageIndex(index);
+  };
+
+  const handleNextImage = () => {
+    if (!images || images.length === 0) return;
+    const nextIndex = (currentImageIndex + 1) % images.length;
+    setCurrentImageIndex(nextIndex);
+    setPreviewImage(images[nextIndex]);
+  };
+
+  const handlePrevImage = () => {
+    if (!images || images.length === 0) return;
+    const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
+    setCurrentImageIndex(prevIndex);
+    setPreviewImage(images[prevIndex]);
+  };
+
+  const displayedImages = images?.slice(0, displayCount) || [];
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
       <main className="container mx-auto px-4 py-24">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-heading font-bold mb-4 gradient-text animate-fade-in">Union Gallery</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto font-display animate-slide-up">
+          <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4 gradient-text animate-fade-in">Union Gallery</h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-display animate-slide-up">
             Browse through our collection of memorable moments and events
           </p>
         </div>
@@ -260,28 +297,36 @@ const Gallery = () => {
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {images?.slice(0, displayCount).map((image, index) => (
-            <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-all duration-500 hover:scale-[1.02] border-2 border-border hover:border-secondary/30 animate-scale-in" style={{ animationDelay: `${(index % 9) * 0.05}s` }}>
-              <div className="relative w-full h-80 overflow-hidden bg-muted/30">
+          {displayedImages.map((image, index) => (
+            <Card 
+              key={image.id} 
+              className="overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-2 border-border hover:border-primary/30 animate-scale-in cursor-pointer" 
+              style={{ animationDelay: `${(index % 9) * 0.05}s` }}
+              onClick={() => handleImageClick(image, index)}
+            >
+              <div className="relative w-full h-80 overflow-hidden bg-gradient-to-br from-muted/30 to-muted/10 flex items-center justify-center">
                 <img
                   src={image.image_url}
                   alt={image.title}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                   decoding="async"
                 />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                  <Maximize2 className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
+                </div>
               </div>
               <CardContent className="p-4">
-                <h3 className="font-semibold mb-1">{image.title}</h3>
+                <h3 className="font-semibold mb-1 truncate">{image.title}</h3>
                 {image.event_name && (
-                  <p className="text-sm text-muted-foreground mb-3">{image.event_name}</p>
+                  <p className="text-sm text-muted-foreground mb-3 truncate">{image.event_name}</p>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDownload(image.image_url, image.title)}
-                    className="flex-1 animate-pulse-glow"
+                    className="flex-1"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download
@@ -308,17 +353,98 @@ const Gallery = () => {
               variant="outline"
               size="lg"
             >
-              View More
+              Load More Images
             </Button>
           </div>
         )}
 
         {images?.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No images found</p>
+            <p className="text-muted-foreground text-lg">No images found matching your criteria</p>
           </div>
         )}
       </main>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] p-0 overflow-hidden bg-black/95 border-none">
+          <div className="relative w-full h-[95vh] flex flex-col">
+            {/* Close button */}
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            {/* Navigation buttons */}
+            {images && images.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+
+            {/* Image - takes most of the space */}
+            <div className="flex-1 flex items-center justify-center p-4 min-h-0 overflow-hidden">
+              <img
+                src={previewImage?.image_url}
+                alt={previewImage?.title}
+                className="max-w-full max-h-full w-auto h-auto object-contain"
+              />
+            </div>
+
+            {/* Image info and actions - compact footer */}
+            <div className="bg-black/90 p-4 text-white flex-shrink-0">
+              <div className="max-w-7xl mx-auto">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold truncate">{previewImage?.title}</h3>
+                    {previewImage?.event_name && (
+                      <p className="text-sm text-gray-300 truncate">{previewImage.event_name}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2 items-center flex-shrink-0">
+                    {images && (
+                      <span className="text-sm text-gray-400 mr-2">
+                        {currentImageIndex + 1} / {images.length}
+                      </span>
+                    )}
+                    <Button
+                      onClick={() => handleDownload(previewImage?.image_url, previewImage?.title)}
+                      variant="outline"
+                      size="sm"
+                      className="bg-white text-black hover:bg-gray-200"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                    {isAdmin && (
+                      <Button
+                        onClick={() => handleDelete(previewImage?.id, previewImage?.image_url)}
+                        variant="destructive"
+                        size="sm"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

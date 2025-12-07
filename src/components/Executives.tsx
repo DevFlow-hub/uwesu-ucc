@@ -20,9 +20,9 @@ const Executives = () => {
   useEffect(() => {
     const fetchExecutives = async () => {
       const { data } = await supabase
-        .from("profiles")
+        .from("executives") // ✅ Changed from "profiles" to "executives"
         .select("*")
-        .eq("is_executive", true)
+        // ✅ Removed the .eq("is_executive", true) filter
         .order("display_order", { ascending: true, nullsFirst: false })
         .order("designation");
 

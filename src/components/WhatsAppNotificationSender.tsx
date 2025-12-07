@@ -49,7 +49,7 @@ export const WhatsAppNotificationSender = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, whatsapp_number, country_code, blocked")
+        .select("id, full_name, whatsapp_number, country_code, blocked, user_id")
         .not("whatsapp_number", "is", null)
         .not("user_id", "is", null)
         .order("full_name");
@@ -61,12 +61,14 @@ export const WhatsAppNotificationSender = () => {
   const { data: emailMembers } = useQuery({
     queryKey: ["members-with-email"],
     queryFn: async () => {
+      // Simple approach: get emails directly from profiles table
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, blocked")
+        .select("id, full_name, email, blocked, user_id")
         .not("email", "is", null)
         .not("user_id", "is", null)
         .order("full_name");
+
       if (error) throw error;
       return data;
     },
@@ -106,19 +108,23 @@ export const WhatsAppNotificationSender = () => {
     setSendingEmail(email);
     try {
       const emailBody = emailPreview || message;
-      const { error } = await supabase.functions.invoke('send-email', {
+      const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: email,
           subject: emailSubject,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #333;">UWESU-UCC Union</h2>
-              <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="white-space: pre-wrap; color: #333; line-height: 1.6;">${emailBody}</p>
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">UWESU-UCC Union</h1>
               </div>
-              <p style="color: #666; font-size: 12px; margin-top: 20px;">
-                This message was sent from UWESU-UCC Union Administration
-              </p>
+              <div style="background-color: #ffffff; padding: 30px; border-left: 4px solid #667eea;">
+                <p style="white-space: pre-wrap; color: #333; line-height: 1.8; font-size: 16px;">${emailBody}</p>
+              </div>
+              <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef;">
+                <p style="color: #6c757d; font-size: 12px; margin: 0;">
+                  This message was sent from UWESU-UCC Union Administration
+                </p>
+              </div>
             </div>
           `,
         },
@@ -128,8 +134,8 @@ export const WhatsAppNotificationSender = () => {
       toast.success(`Email sent to ${memberName}`);
     } catch (error: any) {
       console.error('Error sending email:', error);
-      toast.error("User blocked, unblock to send notification", {
-        description: `Cannot send email to ${memberName}`
+      toast.error("Failed to send email", {
+        description: error.message || `Cannot send email to ${memberName}`
       });
     } finally {
       setSendingEmail(null);
@@ -245,7 +251,8 @@ export const WhatsAppNotificationSender = () => {
         </CardContent>
       </Card>
 
-      {message.trim() && (channel === "email" ? emailSubject.trim() : true) && (
+      {/* Show members list even without message for email channel */}
+      {((message.trim() && (channel === "email" ? emailSubject.trim() : true)) || channel === "email") && (
         <Card>
           <CardHeader>
             <CardTitle>Members ({members?.length || 0})</CardTitle>
@@ -294,6 +301,7 @@ export const WhatsAppNotificationSender = () => {
                           }}
                           variant="default"
                           size="sm"
+                          disabled={!message.trim()}
                         >
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Send WhatsApp
@@ -311,7 +319,7 @@ export const WhatsAppNotificationSender = () => {
                           }}
                           variant="default"
                           size="sm"
-                          disabled={sendingEmail === (member as any).email}
+                          disabled={sendingEmail === (member as any).email || !message.trim() || !emailSubject.trim()}
                         >
                           <Send className="h-4 w-4 mr-2" />
                           {sendingEmail === (member as any).email ? "Sending..." : "Send Email"}
