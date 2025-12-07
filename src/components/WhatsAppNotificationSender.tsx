@@ -105,41 +105,12 @@ export const WhatsAppNotificationSender = () => {
       return;
     }
 
-    setSendingEmail(email);
-    try {
-      const emailBody = emailPreview || message;
-      const { data, error } = await supabase.functions.invoke('send-email', {
-        body: {
-          to: email,
-          subject: emailSubject,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">UWESU-UCC Union</h1>
-              </div>
-              <div style="background-color: #ffffff; padding: 30px; border-left: 4px solid #667eea;">
-                <p style="white-space: pre-wrap; color: #333; line-height: 1.8; font-size: 16px;">${emailBody}</p>
-              </div>
-              <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef;">
-                <p style="color: #6c757d; font-size: 12px; margin: 0;">
-                  This message was sent from UWESU-UCC Union Administration
-                </p>
-              </div>
-            </div>
-          `,
-        },
-      });
-
-      if (error) throw error;
-      toast.success(`Email sent to ${memberName}`);
-    } catch (error: any) {
-      console.error('Error sending email:', error);
-      toast.error("Failed to send email", {
-        description: error.message || `Cannot send email to ${memberName}`
-      });
-    } finally {
-      setSendingEmail(null);
-    }
+    // Use mailto: link to open email client with pre-filled content
+    const emailBody = emailPreview || message;
+    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    
+    window.open(mailtoLink, '_blank');
+    toast.success(`Opening email client for ${memberName}`);
   };
 
   const members = channel === "whatsapp" ? whatsappMembers : emailMembers;

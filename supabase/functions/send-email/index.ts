@@ -28,7 +28,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'UWESU-UCC Union <onboarding@resend.dev>',
+        from: 'UWESU-UCC Union <timothybakyaara516@gmail.com>',
         to: [to],
         subject: subject,
         html: html,
