@@ -59,20 +59,33 @@ export const WhatsAppNotificationSender = () => {
   });
 
   const { data: emailMembers } = useQuery({
-    queryKey: ["members-with-email"],
-    queryFn: async () => {
-      // Simple approach: get emails directly from profiles table
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, blocked, user_id")
-        .not("email", "is", null)
-        .not("user_id", "is", null)
-        .order("full_name");
+  queryKey: ["members-with-email"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, blocked, user_id")
+      .not("user_id", "is", null)
+      .order("full_name");
 
-      if (error) throw error;
-      return data;
-    },
-  });
+    if (error) throw error;
+
+    // Fetch actual emails from auth for each user
+    const membersWithEmails = await Promise.all(
+      data.map(async (profile) => {
+        const { data: emailData } = await supabase.rpc('get_user_email', {
+          user_uuid: profile.user_id
+        });
+        
+        return {
+          ...profile,
+          email: emailData
+        };
+      })
+    );
+
+    return membersWithEmails.filter(m => m.email);
+  },
+});
 
   const openWhatsApp = (whatsappNumber: string, countryCode: string, memberName: string, isBlocked: boolean) => {
     if (isBlocked) {
@@ -105,12 +118,41 @@ export const WhatsAppNotificationSender = () => {
       return;
     }
 
-    // Use mailto: link to open email client with pre-filled content
-    const emailBody = emailPreview || message;
-    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-    
-    window.open(mailtoLink, '_blank');
-    toast.success(`Opening email client for ${memberName}`);
+    setSendingEmail(email);
+    try {
+      const emailBody = emailPreview || message;
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: email,
+          subject: emailSubject,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">UWESU-UCC Union</h1>
+              </div>
+              <div style="background-color: #ffffff; padding: 30px; border-left: 4px solid #667eea;">
+                <p style="white-space: pre-wrap; color: #333; line-height: 1.8; font-size: 16px;">${emailBody}</p>
+              </div>
+              <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef;">
+                <p style="color: #6c757d; font-size: 12px; margin: 0;">
+                  This message was sent from UWESU-UCC Union Administration
+                </p>
+              </div>
+            </div>
+          `,
+        },
+      });
+
+      if (error) throw error;
+      toast.success(`Email sent to ${memberName}`);
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast.error("Failed to send email", {
+        description: error.message || `Cannot send email to ${memberName}`
+      });
+    } finally {
+      setSendingEmail(null);
+    }
   };
 
   const members = channel === "whatsapp" ? whatsappMembers : emailMembers;
@@ -222,7 +264,6 @@ export const WhatsAppNotificationSender = () => {
         </CardContent>
       </Card>
 
-      {/* Show members list even without message for email channel */}
       {((message.trim() && (channel === "email" ? emailSubject.trim() : true)) || channel === "email") && (
         <Card>
           <CardHeader>

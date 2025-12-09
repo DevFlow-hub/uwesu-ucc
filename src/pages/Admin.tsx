@@ -348,6 +348,16 @@ const Admin = () => {
     verifyUser();
   }, [navigate]);
 
+  useEffect(() => {
+  const checkCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log("🔍 Current logged in user:", user);
+    console.log("🔍 User ID:", user?.id);
+    console.log("🔍 User Email:", user?.email);
+  };
+  checkCurrentUser();
+}, []);
+
   // ===== ALL OTHER HOOKS (useSensors) =====
   const sensors = useSensors(
     useSensor(PointerSensor, {
