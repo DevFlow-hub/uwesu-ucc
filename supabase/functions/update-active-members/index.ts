@@ -67,19 +67,35 @@ Deno.serve(async (req) => {
     console.log('Starting active members count update...')
     
     // Call the database function to update active members count
-    const { error } = await supabase.rpc('update_active_members_count')
+    const { data: activeCount, error: rpcError } = await supabase.rpc('update_active_members_count')
     
-    if (error) {
-      console.error('Error updating active members:', error)
-      throw error
+    if (rpcError) {
+      console.error('Error updating active members:', rpcError)
+      throw rpcError
     }
     
-    console.log('Active members count updated successfully')
+    console.log('Active members count updated successfully:', activeCount)
+    
+    // Get the updated value from union_info to confirm
+    const { data: result, error: fetchError } = await supabase
+      .from('union_info')
+      .select('value')
+      .eq('key', 'active_members_30_days')
+      .single();
+    
+    if (fetchError) {
+      console.error('Error fetching updated value:', fetchError)
+      throw fetchError
+    }
+    
+    console.log('Updated value in database:', result.value)
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Active members count updated successfully' 
+        message: 'Active members count updated successfully',
+        activeMembers: parseInt(result.value) || 0,
+        count: activeCount
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

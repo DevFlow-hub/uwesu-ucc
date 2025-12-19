@@ -30,6 +30,31 @@ const Events = () => {
   const [notificationChannel, setNotificationChannel] = useState<"whatsapp" | "email">("whatsapp");
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pastEventsLimit, setPastEventsLimit] = useState(5); // Track how many past events to show
+  
+  // Email spam prevention
+  const [emailsSentForEvent, setEmailsSentForEvent] = useState<Record<string, Set<string>>>(() => {
+    const saved = localStorage.getItem('event_emails_sent');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        const result: Record<string, Set<string>> = {};
+        Object.keys(data).forEach(key => {
+          result[key] = new Set(data[key]);
+        });
+        return result;
+      } catch (e) {
+        return {};
+      }
+    }
+    return {};
+  });
+  const [lastEmailSentTime, setLastEmailSentTime] = useState<number>(() => {
+    const saved = localStorage.getItem('event_last_email_time');
+    return saved ? parseInt(saved) : 0;
+  });
+  
+  const EMAIL_COOLDOWN_MS = 5000; // 5 seconds between emails
   const queryClient = useQueryClient();
 
   // All hooks must be called before any conditional returns
@@ -47,14 +72,14 @@ const Events = () => {
   });
 
   const { data: pastEvents } = useQuery({
-    queryKey: ["past-events"],
+    queryKey: ["past-events", pastEventsLimit],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
         .lt("event_date", new Date().toISOString())
         .order("event_date", { ascending: false })
-        .limit(5);
+        .limit(pastEventsLimit);
       if (error) throw error;
       return data;
     },
@@ -154,7 +179,7 @@ const Events = () => {
         <Footer />
       </div>
     );
-  }
+  };
 
   const handleDeleteClick = (eventId: string) => {
     setEventToDelete(eventId);
@@ -176,14 +201,16 @@ const Events = () => {
     const dateStr = format(eventDate, "MMMM d, yyyy");
     const timeStr = format(eventDate, "h:mm a");
 
-    return `UWESU-UCC
+    return `*UWESU-UCC Event Alert*
 
-${event.title}
+*${event.title}*
 
-📅 Date: ${dateStr}
-⏰ Time: ${timeStr}
-📍 Venue: ${event.venue || 'Venue TBA'}
-📝 Purpose: ${event.description || 'Event details coming soon.'}`;
+Date: ${dateStr}
+Time: ${timeStr}
+Venue: ${event.venue || 'Venue TBA'}
+Details: ${event.description || 'Event details coming soon.'}
+
+_See you there!_`;
   };
 
   const openWhatsApp = (whatsappNumber: string, countryCode: string, event: any) => {
@@ -194,7 +221,7 @@ ${event.title}
     const whatsappUrl = `https://wa.me/${fullNumber}?text=${encodedMessage}`;
     
     window.open(whatsappUrl, '_blank');
-    toast.success("Opening WhatsApp...");
+    toast.success("Opening WhatsApp with emojis! 🎉");
   };
 
   const sendEventEmail = async (email: string, memberName: string, event: any) => {
@@ -202,6 +229,31 @@ ${event.title}
     
     if (!email) {
       toast.error('No email address provided');
+      return;
+    }
+
+    const eventId = event.id;
+    
+    // Check if already sent to this email for this specific event
+    if (emailsSentForEvent[eventId]?.has(email)) {
+      toast.error(`⛔ Already sent to ${memberName}`, {
+        description: "You've already notified this person about this event",
+        duration: 5000
+      });
+      console.log(`Email spam prevented: ${email} already notified for event ${eventId}`);
+      return;
+    }
+
+    // Check cooldown period
+    const now = Date.now();
+    const timeSinceLastEmail = now - lastEmailSentTime;
+    if (lastEmailSentTime > 0 && timeSinceLastEmail < EMAIL_COOLDOWN_MS) {
+      const remainingSeconds = Math.ceil((EMAIL_COOLDOWN_MS - timeSinceLastEmail) / 1000);
+      toast.error("⏳ Please wait", {
+        description: `Wait ${remainingSeconds} seconds before sending another email`,
+        duration: 3000
+      });
+      console.log(`Cooldown active: ${remainingSeconds}s remaining`);
       return;
     }
     
@@ -215,35 +267,39 @@ ${event.title}
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: email,
-          subject: `📅 Upcoming Event: ${event.title} - UWESU-UCC`,
+          subject: `Upcoming Event: ${event.title} - UWESU-UCC`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 28px;">UWESU-UCC Union</h1>
-                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Event Notification</p>
+                <h1 style="color: white; margin: 0; font-size: 32px; letter-spacing: 1px;">UWESU-UCC</h1>
+                <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Event Notification</p>
               </div>
               
               <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <h2 style="color: #333; margin-top: 0;">${event.title}</h2>
+                <h2 style="color: #333; margin-top: 0; font-size: 24px;">${event.title}</h2>
                 
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 10px 0; color: #555;">
+                  <p style="margin: 10px 0; color: #555; font-size: 16px;">
                     <strong style="color: #667eea;">📅 Date:</strong> ${dateStr}
                   </p>
-                  <p style="margin: 10px 0; color: #555;">
+                  <p style="margin: 10px 0; color: #555; font-size: 16px;">
                     <strong style="color: #667eea;">⏰ Time:</strong> ${timeStr}
                   </p>
-                  <p style="margin: 10px 0; color: #555;">
+                  <p style="margin: 10px 0; color: #555; font-size: 16px;">
                     <strong style="color: #667eea;">📍 Venue:</strong> ${event.venue || 'Venue TBA'}
                   </p>
                 </div>
                 
                 ${event.description ? `
                   <div style="margin: 20px 0;">
-                    <h3 style="color: #333; font-size: 16px;">Event Details:</h3>
-                    <p style="color: #555; line-height: 1.6;">${event.description}</p>
+                    <h3 style="color: #333; font-size: 18px;">📝 Event Details:</h3>
+                    <p style="color: #555; line-height: 1.6; font-size: 15px;">${event.description}</p>
                   </div>
                 ` : ''}
+                
+                <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;">
+                  <p style="color: #1976d2; margin: 0; font-size: 16px;">👋 See you there!</p>
+                </div>
                 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
                   <p style="color: #666; font-size: 12px; margin: 0;">
@@ -262,8 +318,27 @@ ${event.title}
         console.error('Email function error:', error);
         throw error;
       }
+
+      // Mark as sent for this specific event
+      const newSentEmails = {
+        ...emailsSentForEvent,
+        [eventId]: new Set([...(emailsSentForEvent[eventId] || []), email])
+      };
+      setEmailsSentForEvent(newSentEmails);
+      setLastEmailSentTime(now);
+
+      // Save to localStorage
+      const toSave: Record<string, string[]> = {};
+      Object.keys(newSentEmails).forEach(key => {
+        toSave[key] = Array.from(newSentEmails[key]);
+      });
+      localStorage.setItem('event_emails_sent', JSON.stringify(toSave));
+      localStorage.setItem('event_last_email_time', now.toString());
       
-      toast.success(`✅ Email sent successfully to ${memberName}`);
+      toast.success(`✅ Email sent successfully to ${memberName}`, {
+        description: "Cannot send to this person again for this event",
+        duration: 3000
+      });
     } catch (error: any) {
       console.error('Error sending email:', error);
       toast.error(`❌ Failed to send email: ${error.message || 'Unknown error'}`);
@@ -292,23 +367,23 @@ ${event.title}
           ) : events && events.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2">
               {events.map((event) => (
-                <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                <Card key={event.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/50 group">
                   <CardHeader>
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
-                        <CardTitle>{event.title}</CardTitle>
-                        <CardDescription>{event.description}</CardDescription>
+                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{event.title}</CardTitle>
+                        <CardDescription className="mt-1">{event.description}</CardDescription>
                       </div>
                       {isAdmin && (
                         <div className="flex gap-2">
                           <Button
-                            variant="outline"
+                            variant="default"
                             size="sm"
                             onClick={() => {
                               setSelectedEventForNotification(event);
                               setNotificationChannel("whatsapp");
                             }}
-                            className="animate-pulse-glow"
+                            className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
                           >
                             <MessageSquare className="mr-2 h-4 w-4" />
                             Notify
@@ -317,7 +392,7 @@ ${event.title}
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDeleteClick(event.id)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:scale-110 transition-all"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -325,22 +400,35 @@ ${event.title}
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <EventCountdown eventDate={event.event_date} />
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>{format(new Date(event.event_date), "MMMM d, yyyy")}</span>
+                  <CardContent className="space-y-4">
+                    {/* Enhanced Countdown */}
+                    <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 rounded-lg border-2 border-primary/20">
+                      <EventCountdown eventDate={event.event_date} />
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>{format(new Date(event.event_date), "h:mm a")}</span>
-                    </div>
-                    {event.venue && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span>{event.venue}</span>
+                    
+                    {/* Event Details with Icons */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group/item">
+                        <div className="p-2 bg-primary/10 rounded-lg group-hover/item:bg-primary/20 transition-colors">
+                          <Calendar className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="font-medium">{format(new Date(event.event_date), "MMMM d, yyyy")}</span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group/item">
+                        <div className="p-2 bg-primary/10 rounded-lg group-hover/item:bg-primary/20 transition-colors">
+                          <Clock className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="font-medium">{format(new Date(event.event_date), "h:mm a")}</span>
+                      </div>
+                      {event.venue && (
+                        <div className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group/item">
+                          <div className="p-2 bg-primary/10 rounded-lg group-hover/item:bg-primary/20 transition-colors">
+                            <MapPin className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="font-medium">{event.venue}</span>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -360,21 +448,60 @@ ${event.title}
             <h2 className="text-2xl font-bold mb-6">Past Events</h2>
             <div className="grid gap-4">
               {pastEvents.map((event) => (
-                <Card key={event.id} className="opacity-75">
+                <Card key={event.id} className="opacity-75 hover:opacity-100 transition-opacity">
                   <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
                         <CardTitle className="text-lg">{event.title}</CardTitle>
                         <CardDescription>{event.description}</CardDescription>
                       </div>
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(event.event_date), "MMM d, yyyy")}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          {format(new Date(event.event_date), "MMM d, yyyy")}
+                        </span>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteClick(event.id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Delete event"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                 </Card>
               ))}
             </div>
+            
+            {/* See More Button */}
+            {pastEvents.length >= pastEventsLimit && (
+              <div className="mt-6 text-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setPastEventsLimit(prev => prev + 5)}
+                  className="min-w-[200px]"
+                >
+                  See More Past Events
+                </Button>
+              </div>
+            )}
+            
+            {/* Show Less Button */}
+            {pastEventsLimit > 5 && (
+              <div className="mt-2 text-center">
+                <Button
+                  variant="ghost"
+                  onClick={() => setPastEventsLimit(5)}
+                  className="text-sm"
+                >
+                  Show Less
+                </Button>
+              </div>
+            )}
           </section>
         )}
       </main>
@@ -425,7 +552,7 @@ ${event.title}
               <Card className="bg-muted/50">
                 <CardHeader>
                   <CardTitle className="text-base">
-                    {notificationChannel === "whatsapp" ? "WhatsApp Message" : "Email"} Preview
+                    {notificationChannel === "whatsapp" ? "WhatsApp Message 📱" : "Email 📧"} Preview
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -437,11 +564,11 @@ ${event.title}
                     <div className="space-y-2">
                       <div>
                         <p className="text-xs text-muted-foreground font-semibold">Subject:</p>
-                        <p className="text-sm font-medium">📅 Upcoming Event: {selectedEventForNotification.title} - UWESU-UCC</p>
+                        <p className="text-sm font-medium">🎉 Upcoming Event: {selectedEventForNotification.title} - UWESU-UCC</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground font-semibold">Preview:</p>
-                        <p className="text-sm">Professional HTML email with event details, date, time, and venue</p>
+                        <p className="text-sm">Professional HTML email with emojis, event details, date, time, and venue</p>
                       </div>
                     </div>
                   )}
@@ -452,39 +579,51 @@ ${event.title}
                 <h3 className="font-semibold">Members ({members?.length || 0})</h3>
                 {members && members.length > 0 ? (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {members.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg bg-background">
-                        <div>
-                          <p className="font-medium text-sm">{member.full_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {notificationChannel === "whatsapp"
-                              ? `${(member as any).country_code} ${(member as any).whatsapp_number}`
-                              : (member as any).email}
-                          </p>
+                    {members.map((member) => {
+                      const eventId = selectedEventForNotification.id;
+                      const alreadySent = notificationChannel === "email" && emailsSentForEvent[eventId]?.has((member as any).email);
+                      
+                      return (
+                        <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg bg-background">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm">{member.full_name}</p>
+                              {alreadySent && (
+                                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                                  ✓ Sent
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {notificationChannel === "whatsapp"
+                                ? `${(member as any).country_code} ${(member as any).whatsapp_number}`
+                                : (member as any).email}
+                            </p>
+                          </div>
+                          {notificationChannel === "whatsapp" ? (
+                            <Button
+                              onClick={() => openWhatsApp((member as any).whatsapp_number!, (member as any).country_code!, selectedEventForNotification)}
+                              variant="default"
+                              size="sm"
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Send WhatsApp
+                              <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={() => sendEventEmail((member as any).email!, member.full_name, selectedEventForNotification)}
+                              variant={alreadySent ? "outline" : "default"}
+                              size="sm"
+                              disabled={sendingEmail === (member as any).email || alreadySent}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              {sendingEmail === (member as any).email ? "Sending..." : alreadySent ? "Already Sent" : "Send Email"}
+                            </Button>
+                          )}
                         </div>
-                        {notificationChannel === "whatsapp" ? (
-                          <Button
-                            onClick={() => openWhatsApp((member as any).whatsapp_number!, (member as any).country_code!, selectedEventForNotification)}
-                            variant="default"
-                            size="sm"
-                          >
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Send WhatsApp
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={() => sendEventEmail((member as any).email!, member.full_name, selectedEventForNotification)}
-                            variant="default"
-                            size="sm"
-                            disabled={sendingEmail === (member as any).email}
-                          >
-                            <Send className="h-4 w-4 mr-2" />
-                            {sendingEmail === (member as any).email ? "Sending..." : "Send Email"}
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-center text-muted-foreground py-4 text-sm">

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Users, ArrowLeft, Eye, EyeOff, Sparkles, Shield, Mail, Lock, User, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -22,7 +22,6 @@ const Auth = () => {
   const location = useLocation();
   const { toast } = useToast();
   
-  // Get the page user was trying to access
   const from = (location.state as any)?.from || "/";
 
   useEffect(() => {
@@ -57,7 +56,6 @@ const Auth = () => {
         });
 
         if (error) {
-          // If user not found, redirect to signup
           if (error.message.includes("Invalid login credentials") || 
               error.message.includes("Email not confirmed") ||
               error.message.includes("User not found")) {
@@ -83,7 +81,6 @@ const Auth = () => {
         });
         navigate(from);
       } else {
-        // Validate all required fields for signup
         if (!fullName.trim()) {
           throw new Error("Please enter your full name");
         }
@@ -92,7 +89,6 @@ const Auth = () => {
           throw new Error("Please enter a valid WhatsApp number");
         }
 
-        // Extract country code and number from WhatsApp input
         const phoneMatch = whatsappNumber.match(/^\+(\d{1,3})(\d+)$/);
         if (!phoneMatch) {
           throw new Error("Please enter a valid WhatsApp number with country code");
@@ -126,14 +122,12 @@ const Auth = () => {
     } catch (error: any) {
       const errorMessage = error.message || error.error_description || "An error occurred";
       
-      // Handle "user already registered" error specifically
       if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
         toast({
           title: "Account Already Exists",
           description: "This email is already registered. Please sign in instead.",
           variant: "destructive",
         });
-        // Auto-switch to login mode
         setMode("login");
       } else {
         toast({
@@ -147,79 +141,128 @@ const Auth = () => {
     }
   };
 
-
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Enhanced background decorations */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-20 -right-20 w-[500px] h-[500px] bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 -left-20 w-[400px] h-[400px] bg-gradient-to-tr from-secondary/20 to-primary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 rounded-full blur-3xl" />
+        
+        {/* Floating particles */}
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary/40 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
+        <div className="absolute top-3/4 right-1/4 w-2 h-2 bg-secondary/40 rounded-full animate-ping" style={{ animationDelay: '1s', animationDuration: '3s' }} />
+        <div className="absolute bottom-1/3 left-2/3 w-2 h-2 bg-primary/40 rounded-full animate-ping" style={{ animationDelay: '2s', animationDuration: '3s' }} />
+      </div>
 
-        <Card className="shadow-elevated">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <Users className="h-8 w-8 text-primary" />
+      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
+        <Card className="shadow-2xl border-2 border-slate-200 overflow-hidden backdrop-blur-sm bg-white/95">
+          {/* Gradient header overlay */}
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-secondary to-primary" />
+          
+          <CardHeader className="text-center pt-10 pb-6 relative">
+            {/* Enhanced icon container */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-secondary/40 rounded-full blur-2xl animate-pulse" />
+                <div className="relative p-5 bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/10 rounded-2xl shadow-lg">
+                  <Users className="h-10 w-10 text-primary" />
+                </div>
               </div>
             </div>
-            <CardTitle className="text-2xl">
-              {mode === "reset" ? "Reset Password" : mode === "login" ? "Welcome Back" : "Join Our Union"}
-            </CardTitle>
-            <CardDescription>
-              {mode === "reset"
-                ? "Enter your email to receive a password reset link"
-                : mode === "login"
-                ? "Sign in with your email"
-                : "Create your account to become a member"}
-            </CardDescription>
+            
+            {/* Title with badge */}
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full border border-primary/20 mb-2">
+                <Shield className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-bold tracking-wider text-primary uppercase">
+                  {mode === "reset" ? "Password Recovery" : mode === "login" ? "Member Login" : "New Member"}
+                </span>
+                <Sparkles className="w-3.5 h-3.5 text-secondary" />
+              </div>
+              
+              <CardTitle className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
+                {mode === "reset" ? "Reset Password" : mode === "login" ? "Welcome Back" : "Join Our Union"}
+              </CardTitle>
+              
+              <CardDescription className="text-base text-slate-600">
+                {mode === "reset"
+                  ? "Enter your email to receive a password reset link"
+                  : mode === "login"
+                  ? "Sign in with your email"
+                  : "Create your account to become a member"}
+              </CardDescription>
+            </div>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAuth} className="space-y-4">
+          
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleAuth} className="space-y-5">
               {mode === "signup" && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
+                <div className="space-y-2 animate-in slide-in-from-right duration-500">
+                  <Label htmlFor="fullName" className="text-sm font-semibold text-slate-700">
+                    Full Name
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                      className="pl-10 h-11 border-slate-300 focus:border-primary focus:ring-primary"
+                    />
+                  </div>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+              <div className="space-y-2 animate-in slide-in-from-left duration-500">
+                <Label htmlFor="email" className="text-sm font-semibold text-slate-700">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="pl-10 h-11 border-slate-300 focus:border-primary focus:ring-primary"
+                  />
+                </div>
               </div>
 
               {mode === "signup" && (
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp">
-                    WhatsApp Number <span className="text-destructive">*</span>
+                <div className="space-y-2 animate-in slide-in-from-right duration-500" style={{ animationDelay: '100ms' }}>
+                  <Label htmlFor="whatsapp" className="text-sm font-semibold text-slate-700">
+                    WhatsApp Number <span className="text-red-500">*</span>
                   </Label>
-                  <PhoneInput
-                    international
-                    defaultCountry="US"
-                    value={whatsappNumber}
-                    onChange={(value) => setWhatsappNumber(value || "")}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                  />
-                  <p className="text-xs text-muted-foreground">
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 z-10" />
+                    <PhoneInput
+                      international
+                      defaultCountry="US"
+                      value={whatsappNumber}
+                      onChange={(value) => setWhatsappNumber(value || "")}
+                      className="flex h-11 w-full rounded-md border border-slate-300 bg-white pl-10 pr-3 py-2 text-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 bg-slate-50 p-2 rounded-md border border-slate-200">
                     Required: We'll send event reminders via WhatsApp. Your number will only be used for union communications.
                   </p>
                 </div>
               )}
 
               {mode !== "reset" && (
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                <div className="space-y-2 animate-in slide-in-from-left duration-500" style={{ animationDelay: '200ms' }}>
+                  <Label htmlFor="password" className="text-sm font-semibold text-slate-700">
+                    Password
+                  </Label>
                   <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
@@ -228,7 +271,7 @@ const Auth = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="pr-10"
+                      className="pl-10 pr-10 h-11 border-slate-300 focus:border-primary focus:ring-primary"
                     />
                     <Button
                       type="button"
@@ -238,9 +281,9 @@ const Auth = () => {
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        <EyeOff className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                       ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        <Eye className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                       )}
                     </Button>
                   </div>
@@ -248,7 +291,7 @@ const Auth = () => {
                     <button
                       type="button"
                       onClick={() => setMode("reset")}
-                      className="text-xs text-primary hover:underline"
+                      className="text-xs text-primary hover:text-primary/80 hover:underline font-medium"
                     >
                       Forgot password?
                     </button>
@@ -258,32 +301,47 @@ const Auth = () => {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-hero"
+                className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
                 disabled={loading}
               >
-                {loading ? "Loading..." : mode === "reset" ? "Send Reset Link" : mode === "login" ? "Sign In" : "Sign Up"}
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Loading...
+                  </div>
+                ) : (
+                  mode === "reset" ? "Send Reset Link" : mode === "login" ? "Sign In" : "Sign Up"
+                )}
               </Button>
 
-              <div className="text-center pt-4 space-y-2">
+              <div className="text-center pt-4 space-y-3">
                 {mode === "reset" ? (
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setMode("login")}
-                    className="w-full"
+                    className="w-full h-11 border-2 border-slate-300 hover:border-primary hover:bg-slate-50 font-semibold"
                   >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to sign in
                   </Button>
                 ) : (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      {mode === "login" ? "Don't have an account?" : "Already have an account?"}
-                    </p>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-200"></div>
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white px-2 text-slate-500 font-medium">
+                          {mode === "login" ? "Don't have an account?" : "Already have an account?"}
+                        </span>
+                      </div>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                      className="w-full"
+                      className="w-full h-11 border-2 border-slate-300 hover:border-primary hover:bg-slate-50 font-semibold"
                     >
                       {mode === "login" ? "Sign Up" : "Sign In"}
                     </Button>
@@ -293,6 +351,15 @@ const Auth = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Decorative bottom element */}
+        <div className="mt-8 flex justify-center">
+          <div className="flex items-center gap-2">
+            <div className="h-1 w-12 bg-gradient-to-r from-transparent to-primary/50 rounded-full" />
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            <div className="h-1 w-12 bg-gradient-to-l from-transparent to-secondary/50 rounded-full" />
+          </div>
+        </div>
       </div>
     </div>
   );

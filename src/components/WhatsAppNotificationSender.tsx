@@ -33,6 +33,8 @@ export const WhatsAppNotificationSender = () => {
   const [emailPreview, setEmailPreview] = useState<string>("");
   const [channel, setChannel] = useState<"whatsapp" | "email">("whatsapp");
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [emailSentTo, setEmailSentTo] = useState<Set<string>>(new Set());
+  const [lastEmailSentTime, setLastEmailSentTime] = useState<number>(0);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     action: () => void;
@@ -43,6 +45,8 @@ export const WhatsAppNotificationSender = () => {
     open: boolean;
     memberName: string;
   }>({ open: false, memberName: "" });
+
+  const EMAIL_COOLDOWN_MS = 10000; // 10 seconds between emails
 
   const { data: whatsappMembers } = useQuery({
     queryKey: ["members-with-whatsapp"],
@@ -59,33 +63,19 @@ export const WhatsAppNotificationSender = () => {
   });
 
   const { data: emailMembers } = useQuery({
-  queryKey: ["members-with-email"],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name, blocked, user_id")
-      .not("user_id", "is", null)
-      .order("full_name");
+    queryKey: ["members-with-email"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, blocked, user_id")
+        .not("email", "is", null)
+        .not("user_id", "is", null)
+        .order("full_name");
 
-    if (error) throw error;
-
-    // Fetch actual emails from auth for each user
-    const membersWithEmails = await Promise.all(
-      data.map(async (profile) => {
-        const { data: emailData } = await supabase.rpc('get_user_email', {
-          user_uuid: profile.user_id
-        });
-        
-        return {
-          ...profile,
-          email: emailData
-        };
-      })
-    );
-
-    return membersWithEmails.filter(m => m.email);
-  },
-});
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const openWhatsApp = (whatsappNumber: string, countryCode: string, memberName: string, isBlocked: boolean) => {
     if (isBlocked) {
@@ -100,8 +90,9 @@ export const WhatsAppNotificationSender = () => {
 
     const cleanNumber = whatsappNumber.replace(/\D/g, '');
     const fullNumber = `${countryCode}${cleanNumber}`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${fullNumber}?text=${encodedMessage}`;
+    
+    // DON'T encode the message - WhatsApp handles emojis natively
+    const whatsappUrl = `https://wa.me/${fullNumber}?text=${encodeURIComponent(message)}`;
     
     window.open(whatsappUrl, '_blank');
     toast.success(`Opening WhatsApp for ${memberName}`);
@@ -118,9 +109,32 @@ export const WhatsAppNotificationSender = () => {
       return;
     }
 
+    // Check if already sent to this email in this session
+    if (emailSentTo.has(email)) {
+      toast.error(`Already sent to ${memberName}`, {
+        description: "You've already sent an email to this person. Refresh the page to send again."
+      });
+      return;
+    }
+
+    // Check cooldown period
+    const now = Date.now();
+    const timeSinceLastEmail = now - lastEmailSentTime;
+    if (timeSinceLastEmail < EMAIL_COOLDOWN_MS) {
+      const remainingSeconds = Math.ceil((EMAIL_COOLDOWN_MS - timeSinceLastEmail) / 1000);
+      toast.error("⏳ Please wait", {
+        description: `Wait ${remainingSeconds} seconds before sending another email`
+      });
+      return;
+    }
+
     setSendingEmail(email);
     try {
       const emailBody = emailPreview || message;
+      
+      // Convert plain text line breaks to HTML
+      const htmlBody = emailBody.replace(/\n/g, '<br>');
+      
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: email,
@@ -131,7 +145,7 @@ export const WhatsAppNotificationSender = () => {
                 <h1 style="color: white; margin: 0; font-size: 28px;">UWESU-UCC Union</h1>
               </div>
               <div style="background-color: #ffffff; padding: 30px; border-left: 4px solid #667eea;">
-                <p style="white-space: pre-wrap; color: #333; line-height: 1.8; font-size: 16px;">${emailBody}</p>
+                <p style="color: #333; line-height: 1.8; font-size: 16px;">${htmlBody}</p>
               </div>
               <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef;">
                 <p style="color: #6c757d; font-size: 12px; margin: 0;">
@@ -144,7 +158,12 @@ export const WhatsAppNotificationSender = () => {
       });
 
       if (error) throw error;
-      toast.success(`Email sent to ${memberName}`);
+      
+      // Mark as sent and update cooldown
+      setEmailSentTo(prev => new Set([...prev, email]));
+      setLastEmailSentTime(now);
+      
+      toast.success(`✅ Email sent to ${memberName}`);
     } catch (error: any) {
       console.error('Error sending email:', error);
       toast.error("Failed to send email", {
@@ -206,6 +225,7 @@ export const WhatsAppNotificationSender = () => {
             />
             <p className="text-xs text-muted-foreground">
               {message.length} characters
+              {channel === "whatsapp" }
             </p>
           </div>
 
@@ -261,6 +281,19 @@ export const WhatsAppNotificationSender = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Spam Prevention Notice */}
+          {channel === "email" && emailSentTo.size > 0 && (
+            <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200">
+              <CardContent className="pt-4">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  📧 Emails sent this session: {emailSentTo.size}
+                  <br />
+                  <span className="text-xs">Refresh the page to reset and send again</span>
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </CardContent>
       </Card>
 
@@ -279,6 +312,8 @@ export const WhatsAppNotificationSender = () => {
               <div className="space-y-3">
                 {members.map((member) => {
                   const isBlocked = (member as any).blocked;
+                  const alreadySent = channel === "email" && emailSentTo.has((member as any).email);
+                  
                   return (
                     <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
@@ -287,6 +322,11 @@ export const WhatsAppNotificationSender = () => {
                           {isBlocked && (
                             <span className="text-xs bg-destructive text-destructive-foreground px-2 py-0.5 rounded">
                               Blocked
+                            </span>
+                          )}
+                          {alreadySent && (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                              ✓ Sent
                             </span>
                           )}
                         </div>
@@ -329,12 +369,12 @@ export const WhatsAppNotificationSender = () => {
                               channel: "email"
                             });
                           }}
-                          variant="default"
+                          variant={alreadySent ? "outline" : "default"}
                           size="sm"
-                          disabled={sendingEmail === (member as any).email || !message.trim() || !emailSubject.trim()}
+                          disabled={sendingEmail === (member as any).email || !message.trim() || !emailSubject.trim() || alreadySent}
                         >
                           <Send className="h-4 w-4 mr-2" />
-                          {sendingEmail === (member as any).email ? "Sending..." : "Send Email"}
+                          {sendingEmail === (member as any).email ? "Sending..." : alreadySent ? "Already Sent" : "Send Email"}
                         </Button>
                       )}
                     </div>

@@ -138,130 +138,129 @@ const Admin = () => {
   });
 
   const uploadImageMutation = useMutation({
-    mutationFn: async ({ files, title, eventName, categoryId }: any) => {
-      console.log('Uploading files:', files.length);
-      
-      const results = [];
-      
-      for (const file of files) {
-        try {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-          const filePath = `${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('gallery-images')
-            .upload(filePath, file, {
-              cacheControl: '3600',
-              upsert: false,
-              contentType: file.type,
-            });
-
-          if (uploadError) {
-            console.error('Upload error for file:', file.name, uploadError);
-            results.push({ success: false, file: file.name, error: uploadError });
-            continue;
-          }
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('gallery-images')
-            .getPublicUrl(filePath);
-
-          const { error: dbError } = await supabase
-            .from('gallery_images')
-            .insert({
-              title: title || null,
-              event_name: eventName || null,
-              category_id: categoryId,
-              image_url: publicUrl,
-            });
-
-          if (dbError) {
-            console.error('Database error for file:', file.name, dbError);
-            results.push({ success: false, file: file.name, error: dbError });
-            continue;
-          }
-          
-          results.push({ success: true, file: file.name });
-        } catch (error) {
-          console.error('Failed to upload file:', file.name, error);
-          results.push({ success: false, file: file.name, error });
-        }
-      }
-      
-      return results;
-    },
-    onSuccess: (results) => {
-      queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
-      const successCount = results.filter((r: any) => r.success).length;
-      const failCount = results.length - successCount;
-      
-      if (uploadForm) {
-        uploadForm.reset();
-        setSelectedCategoryId("");
-        setUploadForm(null);
-      }
-      
-      toast({ 
-        title: "Upload complete",
-        description: `${successCount} image(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}`
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Upload failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const createExecutiveMutation = useMutation({
-    mutationFn: async (executiveData: any) => {
-      const { avatar, ...profileData } = executiveData;
-
-      let avatar_url = null;
-
-      if (avatar) {
-        const fileExt = avatar.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+  mutationFn: async ({ files, title, eventName, categoryId }: any) => {
+    console.log('Uploading files:', files.length);
+    
+    const results = [];
+    
+    for (const file of files) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, avatar);
+          .from('gallery-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type,
+          });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Upload error for file:', file.name, uploadError);
+          results.push({ success: false, file: file.name, error: uploadError });
+          continue;
+        }
 
         const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
+          .from('gallery-images')
           .getPublicUrl(filePath);
 
-        avatar_url = publicUrl;
+        const { error: dbError } = await supabase
+          .from('gallery_images')
+          .insert({
+            title: title || null,
+            event_name: eventName || null,
+            category_id: categoryId,
+            image_url: publicUrl,
+          });
+
+        if (dbError) {
+          console.error('Database error for file:', file.name, dbError);
+          results.push({ success: false, file: file.name, error: dbError });
+          continue;
+        }
+        
+        results.push({ success: true, file: file.name });
+      } catch (error) {
+        console.error('Failed to upload file:', file.name, error);
+        results.push({ success: false, file: file.name, error });
       }
+    }
+    
+    return results;
+  },
+  onSuccess: (results) => {
+    queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
+    const successCount = results.filter((r: any) => r.success).length;
+    const failCount = results.length - successCount;
+    
+    if (uploadForm) {
+      uploadForm.reset();
+      setSelectedCategoryId("");
+      setUploadForm(null);
+    }
+    
+    toast({ 
+      title: "Upload complete",
+      description: `${successCount} image(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}`
+    });
+  },
+  onError: (error: any) => {
+    toast({
+      title: "Upload failed",
+      description: error.message,
+      variant: "destructive",
+    });
+  },
+});
 
-      const { error } = await supabase
-        .from("executives")
-        .insert({
-          ...profileData,
-          avatar_url,
-        });
+  const createExecutiveMutation = useMutation({
+  mutationFn: async (executiveData: any) => {
+    const { avatar, ...profileData } = executiveData;
 
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["executives"] });
-      toast({ title: "Executive profile created successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to create executive profile",
-        description: error.message,
-        variant: "destructive",
+    let avatar_url = null;
+
+    if (avatar) {
+      const fileExt = avatar.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('executives-avatars')  // Changed from 'avatars' to 'executives-avatars'
+        .upload(filePath, avatar);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('executives-avatars')  // Changed from 'avatars' to 'executives-avatars'
+        .getPublicUrl(filePath);
+
+      avatar_url = publicUrl;
+    }
+
+    const { error } = await supabase
+      .from("executives")
+      .insert({
+        ...profileData,
+        avatar_url,
       });
-    },
-  });
 
+    if (error) throw error;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["executives"] });
+    toast({ title: "Executive profile created successfully" });
+  },
+  onError: (error: any) => {
+    toast({
+      title: "Failed to create executive profile",
+      description: error.message,
+      variant: "destructive",
+    });
+  },
+});
   const deleteExecutiveMutation = useMutation({
     mutationFn: async (executiveId: string) => {
       const { error } = await supabase
@@ -284,6 +283,27 @@ const Admin = () => {
     },
   });
 
+  // Add this with your other mutations
+const updateTotalMembersMutation = useMutation({
+  mutationFn: async (newCount: string) => {
+    const { error } = await supabase.rpc('update_total_members', {
+      new_count: parseInt(newCount)
+    });
+    if (error) throw error;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["union-info"] });
+    toast({ title: "Total members updated" });
+  },
+  onError: (error: any) => {
+    toast({
+      title: "Update failed",
+      description: error.message,
+      variant: "destructive",
+    });
+  },
+});
+  
   const deleteImageMutation = useMutation({
     mutationFn: async (imageId: string) => {
       const { error } = await supabase
@@ -305,7 +325,30 @@ const Admin = () => {
       });
     },
   });
-
+const createEventMutation = useMutation({
+  mutationFn: async (eventData: any) => {
+    const { error } = await supabase
+      .from("events")
+      .insert([eventData]);
+    
+    if (error) throw error;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["events"] });
+    toast({
+      title: "Success",
+      description: "Event created successfully",
+    });
+  },
+  onError: (error: any) => {
+    toast({
+      title: "Error",
+      description: error.message || "Failed to create event",
+      variant: "destructive",
+    });
+  },
+});
+  
   const refreshActiveMembersMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.rpc("update_active_members_count");
@@ -485,13 +528,6 @@ const Admin = () => {
     }
   };
 
-  const handleEventSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    // Note: createEventMutation is not defined in the provided code
-    // You'll need to add it to the mutations section above
-    e.currentTarget.reset();
-  };
 
   const handleCategorySubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -503,6 +539,22 @@ const Admin = () => {
     e.currentTarget.reset();
   };
 
+  const handleEventSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    createEventMutation.mutate({
+      title: formData.get("title"),
+      description: formData.get("description"),
+      event_date: formData.get("event_date"),
+      venue: formData.get("venue"),
+      created_by: user.id,
+    });
+    
+    e.currentTarget.reset();
+  };
+
+  
   const handleImageUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -541,28 +593,97 @@ const Admin = () => {
     });
   };
 
-  const handleUnionInfoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const totalMembers = formData.get("total_members") as string;
+  const handleUnionInfoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  const formData = new FormData(e.currentTarget);
+  const totalMembers = formData.get("total_members") as string;
+
+  if (!totalMembers || parseInt(totalMembers) < 0) {
+    toast({
+      title: "Invalid input",
+      description: "Please enter a valid number",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    // Call the database function
+    const { error } = await supabase.rpc('update_total_members', {
+      new_count: parseInt(totalMembers)
+    });
     
-    if (!totalMembers || parseInt(totalMembers) < 0) {
+    if (error) throw error;
+    
+    toast({ 
+      title: "✅ Success!", 
+      description: `Total members updated to ${totalMembers}` 
+    });
+    
+    // FIXED: Clear the input field safely
+    const input = document.getElementById('total_members') as HTMLInputElement;
+    if (input) {
+      input.value = '';
+    }
+    
+  } catch (error: any) {
+    toast({
+      title: "❌ Failed",
+      description: error.message,
+      variant: "destructive",
+    });
+  }
+};
+
+  const handleRefreshActiveMembers = async () => {
+  try {
+    // Call the updated function (counts distinct users)
+    const { data: result, error } = await supabase.rpc('update_active_members_count');
+    
+    if (error) {
       toast({
-        title: "Invalid input",
-        description: "Please enter a valid number",
+        title: "❌ Error",
+        description: error.message,
         variant: "destructive",
       });
       return;
     }
     
-    // Note: updateUnionInfoMutation is not defined in the provided code
-    // You'll need to add it to the mutations section above
-  };
-
-  const handleRefreshActiveMembers = () => {
-    refreshActiveMembersMutation.mutate();
-  };
-
+    // Get the updated value from database
+    const { data: dbValue, error: fetchError } = await supabase
+      .from('union_info')
+      .select('value')
+      .eq('key', 'active_members_30_days')
+      .single();
+    
+    if (fetchError) {
+      toast({
+        title: "❌ Fetch Error",
+        description: fetchError.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Update the display
+    const display = document.getElementById('active-members-display');
+    if (display && dbValue?.value) {
+      display.textContent = dbValue.value;
+    }
+    
+    toast({ 
+      title: "✅ Active Members Updated!", 
+      description: `Now showing: ${dbValue?.value || '0'} unique active users` 
+    });
+    
+  } catch (error: any) {
+    toast({
+      title: "❌ Failed",
+      description: error.message,
+      variant: "destructive",
+    });
+  }
+};
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -1000,10 +1121,10 @@ const Admin = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>Active Members (Last 30 Days)</Label>
-                      <p className="text-2xl font-bold text-primary">
-                        0
+                      <p className="text-2xl font-bold text-primary" id="active-members-display">
+                        0 {/* We'll update this via JavaScript */}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                                            <p className="text-sm text-muted-foreground">
                         Automatically calculated based on user interactions
                       </p>
                     </div>
