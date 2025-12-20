@@ -38,12 +38,14 @@ const Admin = () => {
   const [deletingExecutive, setDeletingExecutive] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [executiveData, setExecutiveData] = useState<any>({
-    full_name: "",
-    designation: "",
-    phone: "",
-    email: "",
-    avatar: null,
-  });
+  full_name: "",
+  designation: "",
+  phone: "",
+  email: "",
+  program: "",
+  level: "",
+  avatar: null,
+});
   const [uploadForm, setUploadForm] = useState<HTMLFormElement | null>(null);
 
   // ===== ALL REF HOOKS =====
@@ -483,13 +485,14 @@ const createEventMutation = useMutation({
       }
 
       const payload = {
-        full_name,
-        designation,
-        phone,
-        email,
-        avatar_url
-      };
-
+  full_name,
+  designation,
+  phone,
+  email,
+  program: executiveData.program || null,
+  level: executiveData.level || null,
+  avatar_url
+};
       if (id) {
         const { error } = await supabase
           .from('executives')
@@ -508,12 +511,14 @@ const createEventMutation = useMutation({
       }
 
       setExecutiveData({ 
-        full_name: "", 
-        designation: "", 
-        phone: "", 
-        email: "", 
-        avatar: null 
-      });
+  full_name: "", 
+  designation: "", 
+  phone: "", 
+  email: "",
+  program: "",
+  level: "",
+  avatar: null 
+});
       formRef.current?.reset();
       queryClient.invalidateQueries(['executives']); 
 
@@ -848,7 +853,27 @@ const createEventMutation = useMutation({
                         placeholder="example@gmail.com"
                       />
                     </div>
+                      <div>
+                      <Label htmlFor="program">Program of Study</Label>
+                      <Input
+                        id="program"
+                        name="program"
+                        value={executiveData.program || ""}
+                        onChange={handleExecutiveChange}
+                        placeholder="e.g., Computer Science, Business Administration"
+                      />
+                    </div>
 
+                    <div>
+                      <Label htmlFor="level">Level</Label>
+                      <Input
+                        id="level"
+                        name="level"
+                        value={executiveData.level || ""}
+                        onChange={handleExecutiveChange}
+                        placeholder="e.g., 100, 200, 300, 400"
+                      />
+                    </div>
                     <Button type="submit" className="w-full">
                       {executiveData.id ? "Update Executive" : "Add Executive"}
                     </Button>

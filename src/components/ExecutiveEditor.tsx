@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageCropper } from "@/components/ImageCropper";
@@ -17,6 +16,8 @@ interface Executive {
   designation: string | null;
   avatar_url: string | null;
   bio: string | null;
+  program: string | null;
+  level: string | null;
 }
 
 interface ExecutiveEditorProps {
@@ -32,7 +33,8 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
     email: "",
     phone: "",
     designation: "",
-    bio: "",
+    program: "",
+    level: "",
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +50,8 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
         email: executive.email || "",
         phone: executive.phone || "",
         designation: executive.designation || "",
-        bio: executive.bio || "",
+        program: executive.program || "",
+        level: executive.level || "",
       });
       setAvatarFile(null);
       setImagePreview(null);
@@ -102,7 +105,7 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
         const { error: uploadError } = await supabase.storage
           .from('executives-avatars')
           .upload(filePath, avatarFile, {
-            cacheControl: '0', // Disable caching to see changes immediately
+            cacheControl: '0',
             upsert: false
           });
 
@@ -112,11 +115,10 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
           .from('executives-avatars')
           .getPublicUrl(filePath);
         
-        // Add cache-busting parameter
         avatar_url = `${publicUrl}?t=${Date.now()}`;
       }
 
-      // Update executive profile in the executives table
+      // Update executive profile with program and level
       const { error } = await supabase
         .from("executives")
         .update({
@@ -124,7 +126,8 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
           email: formData.email,
           phone: formData.phone || null,
           designation: formData.designation || null,
-          bio: formData.bio || null,
+          program: formData.program || null,
+          level: formData.level || null,
           avatar_url,
         })
         .eq("id", executive.id);
@@ -240,13 +243,22 @@ export const ExecutiveEditor = ({ executive, open, onClose, onSuccess }: Executi
             </div>
 
             <div>
-              <Label htmlFor="edit-bio">Bio</Label>
-              <Textarea
-                id="edit-bio"
-                value={formData.bio || ""}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                placeholder="Brief biography or description"
-                rows={4}
+              <Label htmlFor="edit-program">Program of Study</Label>
+              <Input
+                id="edit-program"
+                value={formData.program || ""}
+                onChange={(e) => setFormData({ ...formData, program: e.target.value })}
+                placeholder="e.g., Computer Science, Business Administration"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-level">Level</Label>
+              <Input
+                id="edit-level"
+                value={formData.level || ""}
+                onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                placeholder="e.g., 100, 200, 300, 400"
               />
             </div>
           </div>
