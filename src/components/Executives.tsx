@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Phone, User, Award, Sparkles } from "lucide-react";
+import { Mail, Phone, User, Award, Sparkles, BookOpen, GraduationCap } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Executive {
@@ -12,6 +12,8 @@ interface Executive {
   designation: string | null;
   avatar_url: string | null;
   bio: string | null;
+  program: string | null;
+  level: string | null;
 }
 
 const Executives = () => {
@@ -109,13 +111,32 @@ const Executives = () => {
                     </h3>
                     
                     {exec.designation && (
-                      <div className="mb-6">
+                      <div className="mb-4">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-secondary/10 to-primary/10 rounded-full border border-secondary/20">
                           <Award className="h-3.5 w-3.5 text-secondary" />
                           <p className="text-sm font-semibold text-secondary">
                             {exec.designation}
                           </p>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Bio Data Section */}
+                    {(exec.program || exec.level) && (
+                      <div className="w-full mb-4 space-y-2">
+                        {exec.program && (
+                          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+                            <BookOpen className="h-4 w-4 text-primary" />
+                            <span className="font-medium">{exec.program}</span>
+                          </div>
+                        )}
+                        
+                        {exec.level && (
+                          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+                            <GraduationCap className="h-4 w-4 text-primary" />
+                            <span className="font-medium">Level {exec.level}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                     
