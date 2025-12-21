@@ -70,17 +70,18 @@ const Admin = () => {
   });
 
   const { data: executives, refetch: refetchExecutives } = useQuery({
-    queryKey: ["executives"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("executives")
-        .select("id, full_name, designation, email, avatar_url")
-        .order("id", { ascending: true });
+  queryKey: ["executives"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("executives")
+      .select("*")  // ✅ Select all fields
+      .order("display_order", { ascending: true, nullsFirst: false })  // ✅ Use display_order
+      .order("designation");
 
-      if (error) throw error;
-      return data;
-    },
-  });
+    if (error) throw error;
+    return data;
+  },
+});
 
   const { data: galleryImages } = useQuery({
     queryKey: ["gallery-images"],
