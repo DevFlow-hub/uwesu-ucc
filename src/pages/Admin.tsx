@@ -21,6 +21,7 @@ import { Upload, Trash2, Edit, GripVertical } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ExecutiveEditor } from "@/components/ExecutiveEditor";
+import { CategoryEditor } from "@/components/CategoryEditor";  
 import { UserManagementSection } from "@/components/UserManagementSection";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -36,6 +37,7 @@ const Admin = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [editingExecutive, setEditingExecutive] = useState<any>(null);
   const [deletingExecutive, setDeletingExecutive] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [executiveData, setExecutiveData] = useState<any>({
   full_name: "",
@@ -981,23 +983,32 @@ const createEventMutation = useMutation({
               </Card>
 
               <Card className="border-2">
-                <CardHeader>
-                  <CardTitle>Manage Categories</CardTitle>
-                  <CardDescription>View and delete existing categories</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {categories && categories.length > 0 ? (
-                    <div className="space-y-2">
-                      {categories.map((category) => (
-                        <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div>
-                            <h3 className="font-semibold">{category.name}</h3>
-                            {category.description && (
-                              <p className="text-sm text-muted-foreground">{category.description}</p>
-                            )}
-                          </div>
+              <CardHeader>
+                <CardTitle>Manage Categories</CardTitle>
+                <CardDescription>View, edit, and delete existing categories</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {categories && categories.length > 0 ? (
+                  <div className="space-y-2">
+                    {categories.map((category) => (
+                      <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors">
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{category.name}</h3>
+                          {category.description && (
+                            <p className="text-sm text-muted-foreground">{category.description}</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
                           <Button
-                            variant="3d-destructive"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setEditingCategory(category)}
+                            title="Edit category"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
                             size="icon"
                             onClick={() => {
                               if (confirm(`Are you sure you want to delete "${category.name}"?`)) {
@@ -1005,17 +1016,29 @@ const createEventMutation = useMutation({
                               }
                             }}
                             disabled={deleteCategoryMutation.isPending}
+                            title="Delete category"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">No categories created yet</p>
-                  )}
-                </CardContent>
-              </Card>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No categories created yet</p>
+                )}
+              </CardContent>
+            </Card>
+
+<CategoryEditor
+  category={editingCategory}
+  open={!!editingCategory}
+  onClose={() => setEditingCategory(null)}
+  onSuccess={() => {
+    queryClient.invalidateQueries({ queryKey: ["gallery-categories"] });
+    toast({ title: "Category updated successfully" });
+  }}
+/>
 
               <Card className="border-2">
                 <CardHeader>
