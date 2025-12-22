@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Download, Search, Trash2, X, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { Download, Search, X, ChevronLeft, ChevronRight, Maximize2, Folder } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -24,7 +24,6 @@ const Gallery = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // All hooks must be called before any conditional returns
   const { data: categories } = useQuery({
     queryKey: ["gallery-categories"],
     queryFn: async () => {
@@ -43,7 +42,7 @@ const Gallery = () => {
     queryFn: async () => {
       let query = supabase
         .from("gallery_images")
-        .select("*, gallery_categories(name)")
+        .select("*, gallery_categories(id, name)")
         .order("created_at", { ascending: false });
 
       if (selectedCategory !== "all") {
@@ -59,41 +58,6 @@ const Gallery = () => {
       return data;
     },
     enabled: !loading,
-  });
-
-  const deleteImageMutation = useMutation({
-    mutationFn: async (imageData: { id: string; imageUrl: string }) => {
-      const urlParts = imageData.imageUrl.split("/");
-      const filePath = urlParts[urlParts.length - 1];
-
-      const { error: storageError } = await supabase.storage
-        .from("gallery-images")
-        .remove([filePath]);
-
-      if (storageError) throw storageError;
-
-      const { error: dbError } = await supabase
-        .from("gallery_images")
-        .delete()
-        .eq("id", imageData.id);
-
-      if (dbError) throw dbError;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gallery-images"] });
-      toast({
-        title: "Success",
-        description: "Image deleted successfully",
-      });
-      setPreviewImage(null);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 
   useEffect(() => {
@@ -127,7 +91,6 @@ const Gallery = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Keyboard navigation for image preview
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!previewImage) return;
@@ -229,12 +192,6 @@ const Gallery = () => {
     }
   };
 
-  const handleDelete = (imageId: string, imageUrl: string) => {
-    if (confirm("Are you sure you want to delete this image?")) {
-      deleteImageMutation.mutate({ id: imageId, imageUrl });
-    }
-  };
-
   const handleImageClick = (image: any, index: number) => {
     setPreviewImage(image);
     setCurrentImageIndex(index);
@@ -253,6 +210,18 @@ const Gallery = () => {
     setCurrentImageIndex(prevIndex);
     setPreviewImage(images[prevIndex]);
   };
+
+  // Group images by category when showing all
+  const groupedImages = selectedCategory === "all" && images
+    ? images.reduce((acc, image) => {
+        const categoryName = image.gallery_categories?.name || "Uncategorized";
+        if (!acc[categoryName]) {
+          acc[categoryName] = [];
+        }
+        acc[categoryName].push(image);
+        return acc;
+      }, {} as Record<string, any[]>)
+    : null;
 
   const displayedImages = images?.slice(0, displayCount) || [];
 
@@ -295,56 +264,109 @@ const Gallery = () => {
           </Select>
         </div>
 
-        {/* Gallery Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedImages.map((image, index) => (
-            <Card 
-              key={image.id} 
-              className="overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-2 border-border hover:border-primary/30 animate-scale-in cursor-pointer" 
-              style={{ animationDelay: `${(index % 9) * 0.05}s` }}
-              onClick={() => handleImageClick(image, index)}
-            >
-              <div className="relative w-full h-80 overflow-hidden bg-gradient-to-br from-muted/30 to-muted/10 flex items-center justify-center">
-                <img
-                  src={image.image_url}
-                  alt={image.title}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
-                  <Maximize2 className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
+        {/* Gallery Grid - With Category Headers */}
+        {selectedCategory === "all" && groupedImages ? (
+          <div className="space-y-12">
+            {Object.entries(groupedImages).slice(0, Math.ceil(displayCount / 3)).map(([categoryName, categoryImages]) => (
+              <div key={categoryName}>
+                {/* Category Header */}
+                <div className="flex items-center gap-3 mb-6 pb-3 border-b-2 border-primary/20">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Folder className="h-5 w-5 text-primary" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900">{categoryName}</h2>
+                  <span className="ml-auto px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                    {categoryImages.length} image{categoryImages.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                {/* Images Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {categoryImages.map((image, index) => (
+                    <Card 
+                      key={image.id} 
+                      className="overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-2 border-border hover:border-primary/30 animate-scale-in cursor-pointer" 
+                      style={{ animationDelay: `${(index % 9) * 0.05}s` }}
+                      onClick={() => handleImageClick(image, images.indexOf(image))}
+                    >
+                      <div className="relative w-full h-80 overflow-hidden bg-gradient-to-br from-muted/30 to-muted/10 flex items-center justify-center">
+                        <img
+                          src={image.image_url}
+                          alt={image.title}
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                          <Maximize2 className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
+                        </div>
+                      </div>
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold mb-1 truncate">{image.title}</h3>
+                        {image.event_name && (
+                          <p className="text-sm text-muted-foreground mb-3 truncate">{image.event_name}</p>
+                        )}
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(image.image_url, image.title)}
+                            className="flex-1"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </div>
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-1 truncate">{image.title}</h3>
-                {image.event_name && (
-                  <p className="text-sm text-muted-foreground mb-3 truncate">{image.event_name}</p>
-                )}
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownload(image.image_url, image.title)}
-                    className="flex-1"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
-                  {isAdmin && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(image.id, image.image_url)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+            ))}
+          </div>
+        ) : (
+          // Single Category View (no headers needed)
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedImages.map((image, index) => (
+              <Card 
+                key={image.id} 
+                className="overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-2 border-border hover:border-primary/30 animate-scale-in cursor-pointer" 
+                style={{ animationDelay: `${(index % 9) * 0.05}s` }}
+                onClick={() => handleImageClick(image, index)}
+              >
+                <div className="relative w-full h-80 overflow-hidden bg-gradient-to-br from-muted/30 to-muted/10 flex items-center justify-center">
+                  <img
+                    src={image.image_url}
+                    alt={image.title}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                    <Maximize2 className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-1 truncate">{image.title}</h3>
+                  {image.event_name && (
+                    <p className="text-sm text-muted-foreground mb-3 truncate">{image.event_name}</p>
+                  )}
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(image.image_url, image.title)}
+                      className="flex-1"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {images && images.length > displayCount && (
           <div className="flex justify-center mt-8">
@@ -369,7 +391,6 @@ const Gallery = () => {
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
         <DialogContent className="max-w-[95vw] w-full max-h-[95vh] p-0 overflow-hidden bg-black/95 border-none">
           <div className="relative w-full h-[95vh] flex flex-col">
-            {/* Close button */}
             <button
               onClick={() => setPreviewImage(null)}
               className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
@@ -377,7 +398,6 @@ const Gallery = () => {
               <X className="h-6 w-6" />
             </button>
 
-            {/* Navigation buttons */}
             {images && images.length > 1 && (
               <>
                 <button
@@ -395,7 +415,6 @@ const Gallery = () => {
               </>
             )}
 
-            {/* Image - takes most of the space */}
             <div className="flex-1 flex items-center justify-center p-4 min-h-0 overflow-hidden">
               <img
                 src={previewImage?.image_url}
@@ -404,7 +423,6 @@ const Gallery = () => {
               />
             </div>
 
-            {/* Image info and actions - compact footer */}
             <div className="bg-black/90 p-4 text-white flex-shrink-0">
               <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -429,15 +447,6 @@ const Gallery = () => {
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
-                    {isAdmin && (
-                      <Button
-                        onClick={() => handleDelete(previewImage?.id, previewImage?.image_url)}
-                        variant="destructive"
-                        size="sm"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
                 </div>
               </div>
