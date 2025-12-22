@@ -188,8 +188,7 @@ const Comments = () => {
       <Navigation />
       <main className="flex-grow container mx-auto px-4 py-8 max-w-4xl">
         {/* Hero Section - Fixed icon positioning */}
-        {/* Hero Section - Fixed icon positioning */}
-        <div className="mb-8 text-center pt-8">
+        <div className="mb-8 text-center pt-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
             <MessageSquare className="w-8 h-8 text-primary" />
           </div>
