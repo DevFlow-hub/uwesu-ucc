@@ -7,13 +7,15 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Trash2, Loader2, MessageSquare, Send } from "lucide-react";
+import { Trash2, Loader2, MessageSquare, Send, Reply, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 const Comments = () => {
   const navigate = useNavigate();
   const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [replyContent, setReplyContent] = useState("");
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -84,33 +86,50 @@ const Comments = () => {
         }
       }
 
-      return commentsData.map((comment) => {
+      const commentsWithProfiles = commentsData.map((comment) => {
         const profile = profilesData.find((p) => p.user_id === comment.user_id);
         return {
           ...comment,
           profile_name: profile?.full_name || "Anonymous",
         };
       });
+
+      // Organize comments into parent and replies
+      const parentComments = commentsWithProfiles.filter(c => !c.parent_comment_id);
+      const repliesMap = commentsWithProfiles.filter(c => c.parent_comment_id);
+
+      // Attach replies to their parent comments
+      return parentComments.map(parent => ({
+        ...parent,
+        replies: repliesMap.filter(r => r.parent_comment_id === parent.id)
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      }));
     },
     enabled: !!user,
   });
 
   const createMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, parentId }: { content: string; parentId?: string }) => {
       if (!user) throw new Error("Must be logged in");
       const { error } = await supabase
         .from("comments")
-        .insert({ content, user_id: user.id });
+        .insert({ 
+          content, 
+          user_id: user.id,
+          parent_comment_id: parentId || null
+        });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments"] });
       setNewComment("");
-      toast({ title: "Comment posted successfully" });
+      setReplyContent("");
+      setReplyingTo(null);
+      toast({ title: "Posted successfully" });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error posting comment",
+        title: "Error posting",
         description: error.message,
         variant: "destructive",
       });
@@ -150,22 +169,28 @@ const Comments = () => {
         <Footer />
       </div>
     );
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    createMutation.mutate(newComment);
+    createMutation.mutate({ content: newComment });
+  };
+
+  const handleReplySubmit = (e: React.FormEvent, parentId: string) => {
+    e.preventDefault();
+    if (!replyContent.trim()) return;
+    createMutation.mutate({ content: replyContent, parentId });
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
       <Navigation />
       <main className="flex-grow container mx-auto px-4 py-8 max-w-4xl">
-        {/* Hero Section */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-            <MessageSquare className="w-8 h-8 text-primary" />
+        {/* Hero Section - Fixed icon positioning */}
+        <div className="mb-8 text-center pt-4">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
+            <MessageSquare className="w-7 h-7 text-primary" />
           </div>
           <h1 className="text-4xl font-bold text-slate-900 mb-3">
             Comments & Suggestions
@@ -245,7 +270,7 @@ const Comments = () => {
           </h2>
         </div>
 
-        {/* Comments List */}
+        {/* Comments List with Replies */}
         {commentsLoading ? (
           <div className="flex justify-center items-center h-32">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -259,6 +284,7 @@ const Comments = () => {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <CardContent className="pt-6">
+                  {/* Parent Comment */}
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
@@ -288,9 +314,131 @@ const Comments = () => {
                       </Button>
                     )}
                   </div>
-                  <p className="text-slate-700 whitespace-pre-wrap leading-relaxed pl-13">
+                  <p className="text-slate-700 whitespace-pre-wrap leading-relaxed pl-13 mb-3">
                     {comment.content}
                   </p>
+
+                  {/* Reply Button */}
+                  {user && (
+                    <div className="pl-13 mt-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setReplyingTo(replyingTo?.id === comment.id ? null : comment)}
+                        className="text-primary hover:text-primary hover:bg-primary/10"
+                      >
+                        <Reply className="h-4 w-4 mr-1" />
+                        Reply
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Reply Form */}
+                  {replyingTo?.id === comment.id && (
+                    <div className="mt-4 pl-13 animate-in slide-in-from-top duration-300">
+                      <div className="bg-primary/5 border-l-4 border-primary p-4 rounded-r-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-medium text-slate-700">
+                            Replying to {comment.profile_name}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setReplyingTo(null)}
+                            className="h-6 w-6"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <form onSubmit={(e) => handleReplySubmit(e, comment.id)} className="space-y-3">
+                          <Textarea
+                            placeholder="Write your reply..."
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                            rows={3}
+                            className="resize-none border-slate-300 focus:border-primary focus:ring-primary text-sm"
+                            autoFocus
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setReplyingTo(null);
+                                setReplyContent("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              type="submit" 
+                              size="sm"
+                              disabled={!replyContent.trim() || createMutation.isPending}
+                            >
+                              {createMutation.isPending ? (
+                                <>
+                                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                  Posting...
+                                </>
+                              ) : (
+                                <>
+                                  <Send className="mr-2 h-3 w-3" />
+                                  Post Reply
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Replies Section */}
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div className="mt-4 pl-13 space-y-3 border-l-2 border-primary/20">
+                      {comment.replies.map((reply, replyIndex) => (
+                        <div 
+                          key={reply.id} 
+                          className="ml-4 p-4 bg-slate-50 rounded-lg animate-in fade-in slide-in-from-left duration-300"
+                          style={{ animationDelay: `${replyIndex * 50}ms` }}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-start gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-secondary/70 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                                {reply.profile_name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-slate-900 text-sm">
+                                  {reply.profile_name}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {format(
+                                    new Date(reply.created_at),
+                                    "MMM d, yyyy 'at' h:mm a"
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            {(user?.id === reply.user_id || isAdmin) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteMutation.mutate(reply.id)}
+                                disabled={deleteMutation.isPending}
+                                className="h-7 w-7 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed pl-10">
+                            {reply.content}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
