@@ -21,6 +21,7 @@ import { Upload, Trash2, Edit, GripVertical } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ExecutiveEditor } from "@/components/ExecutiveEditor";
+import { ImageCropper } from "@/components/ImageCropper";
 import { CategoryEditor } from "@/components/CategoryEditor";  
 import { UserManagementSection } from "@/components/UserManagementSection";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -49,7 +50,9 @@ const Admin = () => {
   avatar: null,
 });
   const [uploadForm, setUploadForm] = useState<HTMLFormElement | null>(null);
-
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   // ===== ALL REF HOOKS =====
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -452,20 +455,42 @@ const createEventMutation = useMutation({
 
   // ===== ALL EVENT HANDLERS AND REGULAR FUNCTIONS =====
   const handleExecutiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, files } = e.target;
+  const { name, value, files } = e.target;
+  
+  if (files && files[0]) {
+    // Handle image file - show cropper
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result as string);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
+  } else {
     setExecutiveData(prev => ({
       ...prev,
-      [name]: files ? files[0] : value
+      [name]: value
     }));
-  };
+  }
+};
+
+const handleCropComplete = (croppedBlob: Blob) => {
+  const croppedFile = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
+  setAvatarFile(croppedFile);
+  setExecutiveData(prev => ({
+    ...prev,
+    avatar: croppedFile
+  }));
+  setShowCropper(false);
+};
 
   const handleExecutiveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
 
     try {
-      const { id, avatar, full_name, designation, phone, email } = executiveData;
-
+      const { id, full_name, designation, phone, email } = executiveData;
+      const avatar = avatarFile || executiveData.avatar;
       let avatar_url = id ? executiveData.avatar_url : null;
       if (avatar && avatar instanceof File) {
         const fileExt = avatar.name.split('.').pop();
@@ -808,6 +833,11 @@ const createEventMutation = useMutation({
                         accept="image/*"
                         onChange={handleExecutiveChange}
                       />
+                      {avatarFile && (
+                        <p className="text-sm text-green-600 mt-1 font-medium">
+                          ✓ Image cropped and ready to upload
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -954,6 +984,19 @@ const createEventMutation = useMutation({
                 </AlertDialogContent>
               </AlertDialog>
             </div>
+          {/* Image Cropper */}
+          {imagePreview && (
+            <ImageCropper
+              image={imagePreview}
+              open={showCropper}
+              onClose={() => {
+                setShowCropper(false);
+                setImagePreview(null);
+              }}
+              onComplete={handleCropComplete}
+              aspectRatio={1}
+            />
+          )}
           </TabsContent>
 
           <TabsContent value="members" className="space-y-6 pt-2">
