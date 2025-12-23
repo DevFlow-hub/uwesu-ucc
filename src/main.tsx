@@ -2,24 +2,20 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Apply default theme
-const savedTheme = localStorage.getItem("theme") || "forest";
-document.documentElement.classList.add(savedTheme);
-if (!localStorage.getItem("theme")) {
-  localStorage.setItem("theme", "forest");
+// Set default theme to SUNSET (not forest)
+const savedTheme = localStorage.getItem("theme");
+
+if (!savedTheme) {
+  // First time - set sunset as default
+  localStorage.setItem("theme", "sunset");
+  document.documentElement.className = "sunset";
+} else {
+  // Use saved theme
+  document.documentElement.className = savedTheme;
 }
 
 // Remove any loading elements that might exist
 const loadingElements = document.querySelectorAll('[id*="loading"], [class*="loading"]');
 loadingElements.forEach(el => el.remove());
-
-// Force service worker to update immediately for PWA
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    registrations.forEach((registration) => {
-      registration.update(); // Force update to latest version
-    });
-  });
-}
 
 createRoot(document.getElementById("root")!).render(<App />);
