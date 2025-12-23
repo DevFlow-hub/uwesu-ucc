@@ -376,29 +376,70 @@ const createEventMutation = useMutation({
   });
 
   // ===== ALL EFFECT HOOKS =====
-  useEffect(() => {
-    const verifyUser = async () => {
-      try {
-        const authenticatedUser = await checkAuth();
-        console.log("✅ Authenticated user:", authenticatedUser);
-        // Check both role and email for admin access
-        const isAdminUser = authenticatedUser?.role === "admin" || 
-                           authenticatedUser?.email === "admin@example.com";
-        console.log("✅ Is admin?", isAdminUser);
-        setUser(authenticatedUser);
-        setIsAdmin(isAdminUser);
-        setLoading(false);
-      } catch (error) {
-        console.error("❌ Auth error:", error);
-        setUser(null);
-        setIsAdmin(false);
-        setLoading(false);
-        navigate("/login");
-      }
-    };
-    verifyUser();
-  }, [navigate]);
+  // At the very top of your Admin component, replace the auth check useEffect with this:
 
+useEffect(() => {
+  const verifyAdmin = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.log("❌ No session found");
+        navigate("/auth");
+        return;
+      }
+
+      console.log("✅ Session found:", session.user.email);
+      
+      // Try to get profile with role
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Profile fetch error:", error);
+      }
+
+      // Check if user is admin by role OR by specific email
+      const adminEmails = [
+        "admin@example.com", 
+        // ADD YOUR ACTUAL ADMIN EMAIL HERE:
+        "tbakyaara@gmail.com"  // Replace with your actual email
+      ];
+      
+      const isAdminUser = profile?.role === 'admin' || 
+                         adminEmails.includes(session.user.email || '');
+      
+      console.log("Is admin?", isAdminUser);
+      console.log("User role:", profile?.role);
+      console.log("User email:", session.user.email);
+
+      if (!isAdminUser) {
+        console.log("❌ User is not admin, redirecting...");
+        toast({
+          title: "Access Denied",
+          description: "You don't have admin privileges",
+          variant: "destructive"
+        });
+        navigate("/");
+        return;
+      }
+
+      setUser(session.user);
+      setIsAdmin(true);
+      
+    } catch (error) {
+      console.error("❌ Auth error:", error);
+      navigate("/auth");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  verifyAdmin();
+}, [navigate, toast]);
   useEffect(() => {
   const checkCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
