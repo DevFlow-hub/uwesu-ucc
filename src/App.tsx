@@ -33,8 +33,8 @@ const AppContent = () => {
       } catch (error) {
         console.error('Error checking auth:', error);
       } finally {
-        // Add a minimum delay for smooth loading experience
-        setTimeout(() => setInitializing(false), 800);
+        // Reduced delay - just enough for smooth transition
+        setTimeout(() => setInitializing(false), 500);
       }
     };
 

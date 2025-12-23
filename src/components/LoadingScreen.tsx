@@ -27,7 +27,7 @@ const LoadingScreen = () => {
             <div className="w-full h-full border-4 border-transparent border-t-cyan-400 border-r-cyan-400 rounded-full opacity-60" />
           </motion.div>
 
-          {/* Logo Image */}
+          {/* Logo Image - MULTIPLE FALLBACK PATHS */}
           <motion.div
             animate={{ 
               scale: [1, 1.05, 1],
@@ -37,12 +37,21 @@ const LoadingScreen = () => {
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="relative z-10 w-32 h-32 mx-auto bg-white rounded-full p-2 shadow-2xl"
+            className="relative z-10 w-32 h-32 mx-auto bg-white rounded-full p-2 shadow-2xl flex items-center justify-center"
           >
             <img 
-              src="/lovable-uploads/dbe64b4c-3d4a-4a0d-9ef3-df65f96e6bb2.png" 
+              src="/logo.png" 
               alt="UWESU UCC Logo"
               className="w-full h-full object-contain"
+              onError={(e) => {
+                // Fallback if logo doesn't load - show text instead
+                const img = e.target as HTMLImageElement;
+                img.style.display = 'none';
+                const parent = img.parentElement;
+                if (parent) {
+                  parent.innerHTML = '<div class="text-cyan-600 font-bold text-2xl">UWESU<br/>UCC</div>';
+                }
+              }}
             />
           </motion.div>
 

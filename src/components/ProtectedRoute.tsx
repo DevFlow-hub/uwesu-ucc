@@ -1,7 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import LoadingScreen from './LoadingScreen';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -57,8 +56,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return () => subscription.unsubscribe();
   }, [requireAdmin]);
 
+  // Don't show loading screen here - let App.tsx handle initial load
   if (loading) {
-    return <LoadingScreen />;
+    return null; // Return nothing while checking, App handles the loading screen
   }
 
   if (!isAuthenticated) {
