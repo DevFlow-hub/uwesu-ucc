@@ -1,15 +1,44 @@
 // Service Worker for Push Notifications
+// Version 2.0 - No caching to prevent double loading screen
+
+const CACHE_VERSION = 'v2';
 
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
+  console.log('Service Worker installing... Version 2.0');
+  // Skip waiting to activate immediately
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activated');
-  event.waitUntil(clients.claim());
+  console.log('Service Worker activated - Version 2.0');
+  
+  event.waitUntil(
+    // Clear all old caches
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          console.log('Deleting old cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => {
+      // Take control of all clients immediately
+      return clients.claim();
+    })
+  );
 });
 
+// Don't cache anything - always fetch from network
+self.addEventListener('fetch', (event) => {
+  // Let all requests go directly to network
+  // This prevents old cached versions from showing
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      // Only if network fails, try cache as fallback
+      return caches.match(event.request);
+    })
+  );
+});
 
 self.addEventListener('push', (event) => {
   console.log('=== PUSH EVENT RECEIVED ===');
@@ -63,13 +92,13 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   if (event.action === 'view' || !event.action) {
-    const urlToOpen = event.notification.data || '/events';
+    const urlToOpen = event.notification.data?.url || '/events';
     
     event.waitUntil(
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
         // Check if there's already a window open
         for (const client of clientList) {
-          if (client.url === urlToOpen && 'focus' in client) {
+          if (client.url.includes(urlToOpen) && 'focus' in client) {
             return client.focus();
           }
         }
