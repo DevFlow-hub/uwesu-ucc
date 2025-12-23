@@ -34,7 +34,7 @@ const AppContent = () => {
         console.error('Error checking auth:', error);
       } finally {
         // Reduced delay - just enough for smooth transition
-        setTimeout(() => setInitializing(false), 500);
+        setTimeout(() => setInitializing(false), 3000);
       }
     };
 
