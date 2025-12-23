@@ -15,117 +15,53 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { LogoutHelper } from "./components/LogoutHelper";
 import BlockedUserCheck from "./components/BlockedUserCheck";
-import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingScreen from "./components/LoadingScreen";
 
 const queryClient = new QueryClient();
 
-const AppContent = () => {
-  const [initializing, setInitializing] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+const App = () => {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    // Check initial auth state
-    const initializeAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session);
-      } catch (error) {
-        console.error('Error checking auth:', error);
-      } finally {
-        // Reduced delay - just enough for smooth transition
-        setTimeout(() => setInitializing(false), 3000);
-      }
-    };
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setTimeout(() => setLoading(false), 3000);
+    });
 
-    initializeAuth();
-
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
+      setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  if (initializing) {
+  if (loading) {
     return <LoadingScreen />;
   }
 
   return (
-    <>
-      <BlockedUserCheck />
-      <Routes>
-        {/* Public routes */}
-        <Route 
-          path="/auth" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <Auth />} 
-        />
-        <Route 
-          path="/reset-password" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <ResetPassword />} 
-        />
-
-        {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Index />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/gallery"
-          element={
-            <ProtectedRoute>
-              <Gallery />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/events"
-          element={
-            <ProtectedRoute>
-              <Events />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/comments"
-          element={
-            <ProtectedRoute>
-              <Comments />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute requireAdmin>
-              <Admin />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/logout" element={<LogoutHelper />} />
-        
-        {/* Catch-all route */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <HashRouter>
+          <BlockedUserCheck />
+          <Routes>
+            <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
+            <Route path="/reset-password" element={user ? <Navigate to="/" replace /> : <ResetPassword />} />
+            <Route path="/" element={user ? <Index /> : <Navigate to="/auth" replace />} />
+            <Route path="/gallery" element={user ? <Gallery /> : <Navigate to="/auth" replace />} />
+            <Route path="/events" element={user ? <Events /> : <Navigate to="/auth" replace />} />
+            <Route path="/comments" element={user ? <Comments /> : <Navigate to="/auth" replace />} />
+            <Route path="/admin" element={user ? <Admin /> : <Navigate to="/auth" replace />} />
+            <Route path="/logout" element={<LogoutHelper />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </HashRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 };
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <HashRouter>
-        <AppContent />
-      </HashRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
 
 export default App;

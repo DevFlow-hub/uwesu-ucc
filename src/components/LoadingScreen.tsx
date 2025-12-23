@@ -12,7 +12,7 @@ const LoadingScreen = () => {
             duration: 0.6,
             ease: "easeOut"
           }}
-          className="mb-8 relative"
+          className="mb-8 relative flex items-center justify-center"
         >
           {/* Outer rotating ring */}
           <motion.div
@@ -22,12 +22,12 @@ const LoadingScreen = () => {
               repeat: Infinity,
               ease: "linear"
             }}
-            className="absolute inset-0 w-40 h-40 mx-auto"
+            className="absolute w-40 h-40"
           >
             <div className="w-full h-full border-4 border-transparent border-t-cyan-400 border-r-cyan-400 rounded-full opacity-60" />
           </motion.div>
 
-          {/* Logo Image - MULTIPLE FALLBACK PATHS */}
+          {/* Center white circle with text */}
           <motion.div
             animate={{ 
               scale: [1, 1.05, 1],
@@ -37,22 +37,12 @@ const LoadingScreen = () => {
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="relative z-10 w-32 h-32 mx-auto bg-white rounded-full p-2 shadow-2xl flex items-center justify-center"
+            className="relative z-10 w-32 h-32 bg-white rounded-full shadow-2xl flex items-center justify-center"
           >
-            <img 
-              src="/logo.png" 
-              alt="UWESU UCC Logo"
-              className="w-full h-full object-contain"
-              onError={(e) => {
-                // Fallback if logo doesn't load - show text instead
-                const img = e.target as HTMLImageElement;
-                img.style.display = 'none';
-                const parent = img.parentElement;
-                if (parent) {
-                  parent.innerHTML = '<div class="text-cyan-600 font-bold text-2xl">UWESU<br/>UCC</div>';
-                }
-              }}
-            />
+            <div className="text-cyan-600 font-bold text-center leading-tight">
+              <div className="text-xl">UWESU</div>
+              <div className="text-xl">UCC</div>
+            </div>
           </motion.div>
 
           {/* Inner rotating ring */}
@@ -63,7 +53,7 @@ const LoadingScreen = () => {
               repeat: Infinity,
               ease: "linear"
             }}
-            className="absolute inset-0 w-40 h-40 mx-auto"
+            className="absolute w-40 h-40"
           >
             <div className="w-full h-full border-4 border-transparent border-b-blue-400 border-l-blue-400 rounded-full opacity-40" />
           </motion.div>
@@ -80,7 +70,7 @@ const LoadingScreen = () => {
             UWESU UCC
           </h2>
           <p className="text-cyan-200 text-lg font-medium">
-            Upper West Students' Union
+            Upper West Students Union
           </p>
           
           {/* Animated dots */}

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import BackToTop from "@/components/BackToTop";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock, Trash2, MessageSquare, ExternalLink, Mail, Send } from "lucide-react";
@@ -641,6 +642,7 @@ _See you there!_`;
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <BackToTop />
     </div>
   );
 };

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Loader2, MessageSquare, Send, Reply, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-
+import BackToTop from "@/components/BackToTop";
 const Comments = () => {
   const navigate = useNavigate();
   const [newComment, setNewComment] = useState("");
@@ -462,6 +462,7 @@ const Comments = () => {
         )}
       </main>
       <Footer />
+    <BackToTop />
     </div>
   );
 };
