@@ -89,10 +89,9 @@ export const WhatsAppNotificationSender = () => {
     }
 
     const cleanNumber = whatsappNumber.replace(/\D/g, '');
-    const fullNumber = `${countryCode}${cleanNumber}`;
-    
-    // DON'T encode the message - WhatsApp handles emojis natively
-    const whatsappUrl = `https://wa.me/${fullNumber}?text=${encodeURIComponent(message)}`;
+    const fullNumber = countryCode + cleanNumber;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = 'https://wa.me/' + fullNumber + '?text=' + encodedMessage;
     
     window.open(whatsappUrl, '_blank');
     toast.success(`Opening WhatsApp for ${memberName}`);
@@ -228,7 +227,6 @@ export const WhatsAppNotificationSender = () => {
             />
             <p className="text-xs text-muted-foreground">
               {message.length} characters
-              {channel === "whatsapp" }
             </p>
           </div>
 
