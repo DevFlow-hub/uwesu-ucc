@@ -231,12 +231,12 @@ See you there!
 
   };
 
-  const openWhatsApp = (whatsappNumber: string, countryCode: string, event: any) => {
+    const openWhatsApp = (whatsappNumber: string, countryCode: string, event: any) => {
     const message = generateWhatsAppMessage(event);
     const cleanNumber = whatsappNumber.replace(/\D/g, '');
-    const fullNumber = `${countryCode}${cleanNumber}`;
+    const fullNumber = countryCode + cleanNumber;
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${fullNumber}?text=${encodedMessage}`;
+    const whatsappUrl = 'https://wa.me/' + fullNumber + '?text=' + encodedMessage;
     
     window.open(whatsappUrl, '_blank');
     toast.success("Opening WhatsApp ! ");
