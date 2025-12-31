@@ -319,7 +319,7 @@ See you there!
                 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
                   <p style="color: #666; font-size: 12px; margin: 0;">
-                    This event notification was sent from UWESU-UCC Union Administration
+                    This event notification was sent from UWESU-UCC Administration
                   </p>
                 </div>
               </div>
