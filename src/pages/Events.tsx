@@ -31,9 +31,8 @@ const Events = () => {
   const [notificationChannel, setNotificationChannel] = useState<"whatsapp" | "email">("whatsapp");
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pastEventsLimit, setPastEventsLimit] = useState(5); // Track how many past events to show
+  const [pastEventsLimit, setPastEventsLimit] = useState(5);
   
-  // Email spam prevention
   const [emailsSentForEvent, setEmailsSentForEvent] = useState<Record<string, Set<string>>>(() => {
     const saved = localStorage.getItem('event_emails_sent');
     if (saved) {
@@ -55,10 +54,9 @@ const Events = () => {
     return saved ? parseInt(saved) : 0;
   });
   
-  const EMAIL_COOLDOWN_MS = 5000; // 5 seconds between emails
+  const EMAIL_COOLDOWN_MS = 5000;
   const queryClient = useQueryClient();
 
-  // All hooks must be called before any conditional returns
   const { data: events, isLoading } = useQuery({
     queryKey: ["events"],
     queryFn: async () => {
@@ -116,7 +114,6 @@ const Events = () => {
     enabled: isAdmin,
   });
 
-  // All mutation hooks must be called BEFORE any conditional returns
   const deleteEventMutation = useMutation({
     mutationFn: async (eventId: string) => {
       const { error } = await supabase
@@ -164,7 +161,6 @@ const Events = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Now conditional return is safe - all hooks have been called
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -180,7 +176,7 @@ const Events = () => {
         <Footer />
       </div>
     );
-  };
+  }
 
   const handleDeleteClick = (eventId: string) => {
     setEventToDelete(eventId);
@@ -214,6 +210,28 @@ Details: ${event.description || 'Event details coming soon.'}
 _See you there!_`;
   };
 
+  // NEW FUNCTION - Add this right after generateWhatsAppMessage
+  const generateEmailPreview = (event: any) => {
+    if (!event) return "";
+    
+    const eventDate = new Date(event.event_date);
+    const dateStr = format(eventDate, "MMMM d, yyyy");
+    const timeStr = format(eventDate, "h:mm a");
+
+    return `UWESU-UCC Event Alert
+
+${event.title}
+
+Date: ${dateStr}
+Time: ${timeStr}
+Venue: ${event.venue || 'Venue TBA'}
+Details: ${event.description || 'Event details coming soon.'}
+
+See you there!
+
+Note: Professional HTML email with emojis and styling will be sent.`;
+  };
+
   const openWhatsApp = (whatsappNumber: string, countryCode: string, event: any) => {
     const message = generateWhatsAppMessage(event);
     const cleanNumber = whatsappNumber.replace(/\D/g, '');
@@ -222,7 +240,7 @@ _See you there!_`;
     const whatsappUrl = `https://wa.me/${fullNumber}?text=${encodedMessage}`;
     
     window.open(whatsappUrl, '_blank');
-    toast.success("Opening WhatsApp with emojis! 🎉");
+    toast.success("Opening WhatsApp ! ");
   };
 
   const sendEventEmail = async (email: string, memberName: string, event: any) => {
@@ -235,7 +253,6 @@ _See you there!_`;
 
     const eventId = event.id;
     
-    // Check if already sent to this email for this specific event
     if (emailsSentForEvent[eventId]?.has(email)) {
       toast.error(`⛔ Already sent to ${memberName}`, {
         description: "You've already notified this person about this event",
@@ -245,7 +262,6 @@ _See you there!_`;
       return;
     }
 
-    // Check cooldown period
     const now = Date.now();
     const timeSinceLastEmail = now - lastEmailSentTime;
     if (lastEmailSentTime > 0 && timeSinceLastEmail < EMAIL_COOLDOWN_MS) {
@@ -272,7 +288,7 @@ _See you there!_`;
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 0.5px; white-space: nowrap;">UWESU-UCC</h1>                
+                <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 0.5px; white-space: nowrap;">UWESU-UCC</h1>                
                 <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Event Notification</p>
               </div>
               
@@ -320,7 +336,6 @@ _See you there!_`;
         throw error;
       }
 
-      // Mark as sent for this specific event
       const newSentEmails = {
         ...emailsSentForEvent,
         [eventId]: new Set([...(emailsSentForEvent[eventId] || []), email])
@@ -328,7 +343,6 @@ _See you there!_`;
       setEmailsSentForEvent(newSentEmails);
       setLastEmailSentTime(now);
 
-      // Save to localStorage
       const toSave: Record<string, string[]> = {};
       Object.keys(newSentEmails).forEach(key => {
         toSave[key] = Array.from(newSentEmails[key]);
@@ -360,7 +374,6 @@ _See you there!_`;
           </p>
         </div>
 
-        {/* Upcoming Events */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
           {isLoading ? (
@@ -402,12 +415,10 @@ _See you there!_`;
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* Enhanced Countdown */}
                     <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 rounded-lg border-2 border-primary/20">
                       <EventCountdown eventDate={event.event_date} />
                     </div>
                     
-                    {/* Event Details with Icons */}
                     <div className="space-y-3 pt-2">
                       <div className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group/item">
                         <div className="p-2 bg-primary/10 rounded-lg group-hover/item:bg-primary/20 transition-colors">
@@ -443,7 +454,6 @@ _See you there!_`;
           )}
         </section>
 
-        {/* Past Events */}
         {pastEvents && pastEvents.length > 0 && (
           <section>
             <h2 className="text-2xl font-bold mb-6">Past Events</h2>
@@ -478,7 +488,6 @@ _See you there!_`;
               ))}
             </div>
             
-            {/* See More Button */}
             {pastEvents.length >= pastEventsLimit && (
               <div className="mt-6 text-center">
                 <Button
@@ -491,7 +500,6 @@ _See you there!_`;
               </div>
             )}
             
-            {/* Show Less Button */}
             {pastEventsLimit > 5 && (
               <div className="mt-2 text-center">
                 <Button
@@ -557,22 +565,12 @@ _See you there!_`;
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {notificationChannel === "whatsapp" ? (
-                    <pre className="text-sm whitespace-pre-wrap font-sans">
-                      {generateWhatsAppMessage(selectedEventForNotification)}
-                    </pre>
-                  ) : (
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground font-semibold">Subject:</p>
-                        <p className="text-sm font-medium">🎉 Upcoming Event: {selectedEventForNotification.title}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground font-semibold">Preview:</p>
-                        <p className="text-sm">Professional HTML email with emojis, event details, date, time, and venue</p>
-                      </div>
-                    </div>
-                  )}
+                  <pre className="text-sm whitespace-pre-wrap font-sans">
+                    {notificationChannel === "whatsapp" 
+                      ? generateWhatsAppMessage(selectedEventForNotification)
+                      : generateEmailPreview(selectedEventForNotification)
+                    }
+                  </pre>
                 </CardContent>
               </Card>
 
