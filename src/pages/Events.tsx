@@ -229,7 +229,6 @@ Details: ${event.description || 'Event details coming soon.'}
 
 See you there!
 
-Note: Professional HTML email with emojis and styling will be sent.`;
   };
 
   const openWhatsApp = (whatsappNumber: string, countryCode: string, event: any) => {
