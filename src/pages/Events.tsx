@@ -268,11 +268,11 @@ _See you there!_`;
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: email,
-          subject: `Upcoming Event: ${event.title} - UWESU-UCC`,
+          subject: `Upcoming Event: ${event.title}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 32px; letter-spacing: 1px;">UWESU-UCC</h1>
+              <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 0.5px; white-space: nowrap;">UWESU-UCC</h1>                
                 <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Event Notification</p>
               </div>
               
@@ -565,7 +565,7 @@ _See you there!_`;
                     <div className="space-y-2">
                       <div>
                         <p className="text-xs text-muted-foreground font-semibold">Subject:</p>
-                        <p className="text-sm font-medium">🎉 Upcoming Event: {selectedEventForNotification.title} - UWESU-UCC</p>
+                        <p className="text-sm font-medium">🎉 Upcoming Event: {selectedEventForNotification.title}</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground font-semibold">Preview:</p>
