@@ -91,8 +91,7 @@ export const WhatsAppNotificationSender = () => {
     const cleanNumber = whatsappNumber.replace(/\D/g, '');
     const fullNumber = countryCode + cleanNumber;
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = 'https://wa.me/' + '?text=' + encodedMessage;
-    
+    const whatsappUrl = 'https://wa.me/' + fullNumber + '?text=' + encodedMessage;    
     window.open(whatsappUrl, '_blank');
     toast.success(`Opening WhatsApp for ${memberName}`);
   };
