@@ -140,14 +140,14 @@ export const WhatsAppNotificationSender = () => {
           to: email,
           subject: emailSubject,
           html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                  <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 0.5px; white-space: nowrap;">UWESU-UCC</h1>
-                  <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Union Administration</p>
-                </div>
-                <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                  <p style="color: #333; line-height: 1.8; font-size: 16px;">${htmlBody}</p>
-                </div>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 0.5px; white-space: nowrap;">UWESU-UCC</h1>
+                <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Union Administration</p>
+              </div>
+              <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <p style="color: #333; line-height: 1.8; font-size: 16px;">${htmlBody}</p>
+              </div>
               <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef;">
                 <p style="color: #6c757d; font-size: 12px; margin: 0;">
                   This message was sent from UWESU-UCC Union Administration
