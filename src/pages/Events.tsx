@@ -198,19 +198,15 @@ const Events = () => {
     const dateStr = format(eventDate, "MMMM d, yyyy");
     const timeStr = format(eventDate, "h:mm a");
 
-    return `*UWESU-UCC Event Alert*
-
-*${event.title}*
-
-Date: ${dateStr}
-Time: ${timeStr}
-Venue: ${event.venue || 'Venue TBA'}
-Details: ${event.description || 'Event details coming soon.'}
-
-_See you there!_`;
+    return "*UWESU-UCC Event Alert*\n\n" +
+      "*" + event.title + "*\n\n" +
+      "Date: " + dateStr + "\n" +
+      "Time: " + timeStr + "\n" +
+      "Venue: " + (event.venue || 'Venue TBA') + "\n" +
+      "Details: " + (event.description || 'Event details coming soon.') + "\n\n" +
+      "_See you there!_";
   };
 
-  // NEW FUNCTION - Add this right after generateWhatsAppMessage
   const generateEmailPreview = (event: any) => {
     if (!event) return "";
     
@@ -218,20 +214,17 @@ _See you there!_`;
     const dateStr = format(eventDate, "MMMM d, yyyy");
     const timeStr = format(eventDate, "h:mm a");
 
-    return `UWESU-UCC Event Alert
-
-${event.title}
-
-Date: ${dateStr}
-Time: ${timeStr}
-Venue: ${event.venue || 'Venue TBA'}
-Details: ${event.description || 'Event details coming soon.'}
-
-See you there!
-
+    return "UWESU-UCC Event Alert\n\n" +
+      event.title + "\n\n" +
+      "Date: " + dateStr + "\n" +
+      "Time: " + timeStr + "\n" +
+      "Venue: " + (event.venue || 'Venue TBA') + "\n" +
+      "Details: " + (event.description || 'Event details coming soon.') + "\n\n" +
+      "See you there!\n\n" +
+      "Note: Professional HTML email with emojis and styling will be sent.";
   };
 
-    const openWhatsApp = (whatsappNumber: string, countryCode: string, event: any) => {
+  const openWhatsApp = (whatsappNumber: string, countryCode: string, event: any) => {
     const message = generateWhatsAppMessage(event);
     const cleanNumber = whatsappNumber.replace(/\D/g, '');
     const fullNumber = countryCode + cleanNumber;
@@ -239,7 +232,7 @@ See you there!
     const whatsappUrl = 'https://wa.me/' + fullNumber + '?text=' + encodedMessage;
     
     window.open(whatsappUrl, '_blank');
-    toast.success("Opening WhatsApp ! ");
+    toast.success("Opening WhatsApp!");
   };
 
   const sendEventEmail = async (email: string, memberName: string, event: any) => {
@@ -253,11 +246,11 @@ See you there!
     const eventId = event.id;
     
     if (emailsSentForEvent[eventId]?.has(email)) {
-      toast.error(`⛔ Already sent to ${memberName}`, {
+      toast.error('Already sent to ' + memberName, {
         description: "You've already notified this person about this event",
         duration: 5000
       });
-      console.log(`Email spam prevented: ${email} already notified for event ${eventId}`);
+      console.log('Email spam prevented: ' + email + ' already notified for event ' + eventId);
       return;
     }
 
@@ -265,11 +258,11 @@ See you there!
     const timeSinceLastEmail = now - lastEmailSentTime;
     if (lastEmailSentTime > 0 && timeSinceLastEmail < EMAIL_COOLDOWN_MS) {
       const remainingSeconds = Math.ceil((EMAIL_COOLDOWN_MS - timeSinceLastEmail) / 1000);
-      toast.error("⏳ Please wait", {
-        description: `Wait ${remainingSeconds} seconds before sending another email`,
+      toast.error("Please wait", {
+        description: 'Wait ' + remainingSeconds + ' seconds before sending another email',
         duration: 3000
       });
-      console.log(`Cooldown active: ${remainingSeconds}s remaining`);
+      console.log('Cooldown active: ' + remainingSeconds + 's remaining');
       return;
     }
     
@@ -283,48 +276,28 @@ See you there!
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: email,
-          subject: `Upcoming Event: ${event.title}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 0.5px; white-space: nowrap;">UWESU-UCC</h1>                
-                <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Event Notification</p>
-              </div>
-              
-              <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <h2 style="color: #333; margin-top: 0; font-size: 24px;">${event.title}</h2>
-                
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 10px 0; color: #555; font-size: 16px;">
-                    <strong style="color: #667eea;">📅 Date:</strong> ${dateStr}
-                  </p>
-                  <p style="margin: 10px 0; color: #555; font-size: 16px;">
-                    <strong style="color: #667eea;">⏰ Time:</strong> ${timeStr}
-                  </p>
-                  <p style="margin: 10px 0; color: #555; font-size: 16px;">
-                    <strong style="color: #667eea;">📍 Venue:</strong> ${event.venue || 'Venue TBA'}
-                  </p>
-                </div>
-                
-                ${event.description ? `
-                  <div style="margin: 20px 0;">
-                    <h3 style="color: #333; font-size: 18px;">📝 Event Details:</h3>
-                    <p style="color: #555; line-height: 1.6; font-size: 15px;">${event.description}</p>
-                  </div>
-                ` : ''}
-                
-                <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;">
-                  <p style="color: #1976d2; margin: 0; font-size: 16px;">👋 See you there!</p>
-                </div>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                  <p style="color: #666; font-size: 12px; margin: 0;">
-                    This event notification was sent from UWESU-UCC Administration
-                  </p>
-                </div>
-              </div>
-            </div>
-          `,
+          subject: 'Upcoming Event: ' + event.title,
+          html: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">' +
+            '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">' +
+            '<h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 0.5px; white-space: nowrap;">UWESU-UCC</h1>' +
+            '<p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Event Notification</p>' +
+            '</div>' +
+            '<div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">' +
+            '<h2 style="color: #333; margin-top: 0; font-size: 24px;">' + event.title + '</h2>' +
+            '<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">' +
+            '<p style="margin: 10px 0; color: #555; font-size: 16px;"><strong style="color: #667eea;">📅 Date:</strong> ' + dateStr + '</p>' +
+            '<p style="margin: 10px 0; color: #555; font-size: 16px;"><strong style="color: #667eea;">⏰ Time:</strong> ' + timeStr + '</p>' +
+            '<p style="margin: 10px 0; color: #555; font-size: 16px;"><strong style="color: #667eea;">📍 Venue:</strong> ' + (event.venue || 'Venue TBA') + '</p>' +
+            '</div>' +
+            (event.description ? '<div style="margin: 20px 0;"><h3 style="color: #333; font-size: 18px;">📝 Event Details:</h3><p style="color: #555; line-height: 1.6; font-size: 15px;">' + event.description + '</p></div>' : '') +
+            '<div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;">' +
+            '<p style="color: #1976d2; margin: 0; font-size: 16px;">👋 See you there!</p>' +
+            '</div>' +
+            '<div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">' +
+            '<p style="color: #666; font-size: 12px; margin: 0;">This event notification was sent from UWESU-UCC Administration</p>' +
+            '</div>' +
+            '</div>' +
+            '</div>',
         },
       });
 
@@ -349,13 +322,13 @@ See you there!
       localStorage.setItem('event_emails_sent', JSON.stringify(toSave));
       localStorage.setItem('event_last_email_time', now.toString());
       
-      toast.success(`✅ Email sent successfully to ${memberName}`, {
+      toast.success('Email sent successfully to ' + memberName, {
         description: "Cannot send to this person again for this event",
         duration: 3000
       });
     } catch (error: any) {
       console.error('Error sending email:', error);
-      toast.error(`❌ Failed to send email: ${error.message || 'Unknown error'}`);
+      toast.error('Failed to send email: ' + (error.message || 'Unknown error'));
     } finally {
       setSendingEmail(null);
     }
@@ -560,7 +533,7 @@ See you there!
               <Card className="bg-muted/50">
                 <CardHeader>
                   <CardTitle className="text-base">
-                    {notificationChannel === "whatsapp" ? "WhatsApp Message 📱" : "Email 📧"} Preview
+                    {notificationChannel === "whatsapp" ? "WhatsApp Message" : "Email"} Preview
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -588,13 +561,13 @@ See you there!
                               <p className="font-medium text-sm">{member.full_name}</p>
                               {alreadySent && (
                                 <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
-                                  ✓ Sent
+                                  Sent
                                 </span>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground">
                               {notificationChannel === "whatsapp"
-                                ? `${(member as any).country_code} ${(member as any).whatsapp_number}`
+                                ? (member as any).country_code + ' ' + (member as any).whatsapp_number
                                 : (member as any).email}
                             </p>
                           </div>
