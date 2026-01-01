@@ -141,7 +141,7 @@ export const WhatsAppNotificationSender = () => {
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
       <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 0.5px; white-space: nowrap;">UWESU-UCC</h1>
-      <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Union Administration</p>
+      <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 16px;">Administration</p>
     </div>
     
     <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
