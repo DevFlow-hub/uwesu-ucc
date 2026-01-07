@@ -40,6 +40,7 @@ const Admin = () => {
   const [deletingExecutive, setDeletingExecutive] = useState<any>(null);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isMultiDay, setIsMultiDay] = useState(false);
   const [executiveData, setExecutiveData] = useState<any>({
   full_name: "",
   designation: "",
@@ -559,20 +560,33 @@ const handleCropComplete = (croppedBlob: Blob) => {
   };
 
   const handleEventSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    createEventMutation.mutate({
-      title: formData.get("title"),
-      description: formData.get("description"),
-      event_date: formData.get("event_date"),
-      venue: formData.get("venue"),
-      created_by: user.id,
-    });
-    
-    e.currentTarget.reset();
+  e.preventDefault();
+  const formData = new FormData(e.currentTarget);
+  
+  const eventData: any = {
+    title: formData.get("title"),
+    description: formData.get("description"),
+    event_date: formData.get("event_date"),
+    venue: formData.get("venue"),
+    created_by: user.id,
   };
 
+  // Add end_date if it's a multi-day event
+  if (isMultiDay && formData.get("end_date")) {
+    const startDateTime = formData.get("event_date") as string;
+    const endDateOnly = formData.get("end_date") as string;
+    
+    // Extract time from start date (e.g., "14:30")
+    const startTime = startDateTime.split('T')[1];
+    
+    // Combine end date with start time
+    eventData.end_date = endDateOnly + 'T' + startTime;
+  }
+
+  createEventMutation.mutate(eventData);
+  e.currentTarget.reset();
+  setIsMultiDay(false);
+};
   
   const handleImageUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -778,25 +792,72 @@ const handleCropComplete = (croppedBlob: Blob) => {
                 <CardDescription>Add upcoming events for members</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleEventSubmit} className="space-y-4">
+              <form onSubmit={handleEventSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Event Title</Label>
+                  <Input id="title" name="title" required />
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea id="description" name="description" />
+                </div>
+
+                {/* Multi-day toggle */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="multiday"
+                    checked={isMultiDay}
+                    onChange={(e) => setIsMultiDay(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="multiday" className="cursor-pointer">
+                    Multi-day event (spans multiple days)
+                  </Label>
+                </div>
+
+                {/* Start Date with Time */}
+                <div>
+                  <Label htmlFor="event_date">
+                    {isMultiDay ? "Start Date & Time" : "Date & Time"}
+                  </Label>
+                  <Input 
+                    id="event_date" 
+                    name="event_date" 
+                    type="datetime-local" 
+                    required 
+                  />
+                  {isMultiDay && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      The time you select will apply to all days of this event
+                    </p>
+                  )}
+                </div>
+
+                {/* End Date - only DATE, no time */}
+                {isMultiDay && (
                   <div>
-                    <Label htmlFor="title">Event Title</Label>
-                    <Input id="title" name="title" required />
+                    <Label htmlFor="end_date">End Date</Label>
+                    <Input 
+                      id="end_date" 
+                      name="end_date" 
+                      type="date"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Same time as start date
+                    </p>
                   </div>
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" name="description" />
-                  </div>
-                  <div>
-                    <Label htmlFor="event_date">Date & Time</Label>
-                    <Input id="event_date" name="event_date" type="datetime-local" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="venue">Venue</Label>
-                    <Input id="venue" name="venue" />
-                  </div>
-                  <Button type="submit" variant="3d">Create Event</Button>
-                </form>
+                )}
+
+                <div>
+                  <Label htmlFor="venue">Venue</Label>
+                  <Input id="venue" name="venue" />
+                </div>
+
+                <Button type="submit" variant="3d">Create Event</Button>
+              </form>
               </CardContent>
             </Card>
           </TabsContent>

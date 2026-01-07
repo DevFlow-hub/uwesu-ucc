@@ -161,6 +161,32 @@ const Events = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // NEW HELPER FUNCTION FOR MULTI-DAY EVENTS
+  const formatEventDate = (startDate: string, endDate?: string) => {
+    const start = new Date(startDate);
+    
+    if (!endDate) {
+      // Single day event
+      return {
+        dateStr: format(start, "MMMM d, yyyy"),
+        timeStr: format(start, "h:mm a"),
+        isMultiDay: false
+      };
+    }
+    
+    // Multi-day event (same time for all days)
+    const end = new Date(endDate);
+    const startDateStr = format(start, "MMM d");
+    const endDateStr = format(end, "MMM d, yyyy");
+    const timeStr = format(start, "h:mm a");
+    
+    return {
+      dateStr: startDateStr + " - " + endDateStr,
+      timeStr: timeStr,
+      isMultiDay: true
+    };
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -194,9 +220,7 @@ const Events = () => {
   const generateWhatsAppMessage = (event: any) => {
     if (!event) return "";
     
-    const eventDate = new Date(event.event_date);
-    const dateStr = format(eventDate, "MMMM d, yyyy");
-    const timeStr = format(eventDate, "h:mm a");
+    const { dateStr, timeStr } = formatEventDate(event.event_date, event.end_date);
 
     return "*UWESU-UCC Event Alert*\n\n" +
       "*" + event.title + "*\n\n" +
@@ -210,9 +234,7 @@ const Events = () => {
   const generateEmailPreview = (event: any) => {
     if (!event) return "";
     
-    const eventDate = new Date(event.event_date);
-    const dateStr = format(eventDate, "MMMM d, yyyy");
-    const timeStr = format(eventDate, "h:mm a");
+    const { dateStr, timeStr } = formatEventDate(event.event_date, event.end_date);
 
     return "UWESU-UCC Event Alert\n\n" +
       event.title + "\n\n" +
@@ -268,9 +290,7 @@ const Events = () => {
     
     setSendingEmail(email);
     try {
-      const eventDate = new Date(event.event_date);
-      const dateStr = format(eventDate, "MMMM d, yyyy");
-      const timeStr = format(eventDate, "h:mm a");
+      const { dateStr, timeStr } = formatEventDate(event.event_date, event.end_date);
 
       console.log('Invoking send-email function...');
       const { data, error } = await supabase.functions.invoke('send-email', {
@@ -352,70 +372,83 @@ const Events = () => {
             <p className="text-muted-foreground">Loading events...</p>
           ) : events && events.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2">
-              {events.map((event) => (
-                <Card key={event.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/50 group">
-                  <CardHeader>
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{event.title}</CardTitle>
-                        <CardDescription className="mt-1">{event.description}</CardDescription>
-                      </div>
-                      {isAdmin && (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedEventForNotification(event);
-                              setNotificationChannel("whatsapp");
-                            }}
-                            className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                          >
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Notify
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteClick(event.id)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:scale-110 transition-all"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+              {events.map((event) => {
+                const { dateStr, timeStr, isMultiDay } = formatEventDate(event.event_date, event.end_date);
+                
+                return (
+                  <Card key={event.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/50 group">
+                    <CardHeader>
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                          <CardTitle className="text-xl group-hover:text-primary transition-colors">{event.title}</CardTitle>
+                          <CardDescription className="mt-1">{event.description}</CardDescription>
                         </div>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 rounded-lg border-2 border-primary/20">
-                      <EventCountdown eventDate={event.event_date} />
-                    </div>
-                    
-                    <div className="space-y-3 pt-2">
-                      <div className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group/item">
-                        <div className="p-2 bg-primary/10 rounded-lg group-hover/item:bg-primary/20 transition-colors">
-                          <Calendar className="h-4 w-4 text-primary" />
-                        </div>
-                        <span className="font-medium">{format(new Date(event.event_date), "MMMM d, yyyy")}</span>
+                        {isAdmin && (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedEventForNotification(event);
+                                setNotificationChannel("whatsapp");
+                              }}
+                              className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                            >
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Notify
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteClick(event.id)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:scale-110 transition-all"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group/item">
-                        <div className="p-2 bg-primary/10 rounded-lg group-hover/item:bg-primary/20 transition-colors">
-                          <Clock className="h-4 w-4 text-primary" />
-                        </div>
-                        <span className="font-medium">{format(new Date(event.event_date), "h:mm a")}</span>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 rounded-lg border-2 border-primary/20">
+                        <EventCountdown eventDate={event.event_date} />
                       </div>
-                      {event.venue && (
+                      
+                      <div className="space-y-3 pt-2">
                         <div className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group/item">
                           <div className="p-2 bg-primary/10 rounded-lg group-hover/item:bg-primary/20 transition-colors">
-                            <MapPin className="h-4 w-4 text-primary" />
+                            <Calendar className="h-4 w-4 text-primary" />
                           </div>
-                          <span className="font-medium">{event.venue}</span>
+                          <div className="flex-1">
+                            <span className="font-medium">{dateStr}</span>
+                            {isMultiDay && (
+                              <span className="ml-2 text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">
+                                Multi-day
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                        
+                        <div className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group/item">
+                          <div className="p-2 bg-primary/10 rounded-lg group-hover/item:bg-primary/20 transition-colors">
+                            <Clock className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="font-medium">{timeStr}</span>
+                        </div>
+                        
+                        {event.venue && (
+                          <div className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group/item">
+                            <div className="p-2 bg-primary/10 rounded-lg group-hover/item:bg-primary/20 transition-colors">
+                              <MapPin className="h-4 w-4 text-primary" />
+                            </div>
+                            <span className="font-medium">{event.venue}</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           ) : (
             <Card>
