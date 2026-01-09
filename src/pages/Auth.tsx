@@ -97,22 +97,31 @@ const Auth = () => {
         const number = phoneMatch[2];
 
         const { error, data } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-              whatsapp_number: number,
-              country_code: countryCode,
-            },
-          },
-        });
+  email,
+  password,
+  options: {
+    data: {
+      full_name: fullName,
+      whatsapp_number: number,
+      country_code: countryCode,
+    },
+  },
+});
 
-        if (error) throw error;
+if (error) throw error;
 
-        sessionStorage.setItem('just-logged-in', 'true');
-        window.dispatchEvent(new Event('user-logged-in'));
+// Log signup to admin_notifications table
+if (data.user) {
+  await supabase.from('admin_notifications').insert({
+    user_id: data.user.id,
+    user_email: email,
+    user_name: fullName,
+    event_type: 'signup'
+  });
+}
 
+sessionStorage.setItem('just-logged-in', 'true');
+window.dispatchEvent(new Event('user-logged-in'));
         toast({
           title: "Account created!",
           description: "You have been automatically logged in.",
