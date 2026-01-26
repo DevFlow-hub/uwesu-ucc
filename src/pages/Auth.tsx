@@ -39,7 +39,7 @@ const Auth = () => {
     try {
       if (mode === "reset") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `${window.location.origin}/#/reset-password`,
         });
 
         if (error) throw error;
@@ -56,18 +56,36 @@ const Auth = () => {
         });
 
         if (error) {
-          if (error.message.includes("Invalid login credentials") || 
-              error.message.includes("Email not confirmed") ||
-              error.message.includes("User not found")) {
+          // Handle specific error cases - DON'T automatically switch to signup
+          if (error.message.includes("Email not confirmed")) {
+            toast({
+              title: "Email Not Verified",
+              description: "Please check your email and click the verification link we sent you.",
+              variant: "destructive",
+            });
+          } else if (error.message.includes("Invalid login credentials")) {
+            toast({
+              title: "Invalid Credentials",
+              description: "The email or password you entered is incorrect. Please try again.",
+              variant: "destructive",
+            });
+          } else if (error.message.includes("User not found")) {
             toast({
               title: "Account Not Found",
-              description: "No account exists with this email. Please sign up instead.",
+              description: "No account exists with this email. Would you like to sign up?",
+              variant: "destructive",
             });
-            setMode("signup");
-            setLoading(false);
-            return;
+            // Don't automatically switch - let user decide
+          } else {
+            // Generic error - don't assume account doesn't exist
+            toast({
+              title: "Login Failed",
+              description: error.message || "An error occurred. Please try again.",
+              variant: "destructive",
+            });
           }
-          throw error;
+          setLoading(false);
+          return;
         }
 
         if (data.user) {
@@ -97,31 +115,31 @@ const Auth = () => {
         const number = phoneMatch[2];
 
         const { error, data } = await supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    data: {
-      full_name: fullName,
-      whatsapp_number: number,
-      country_code: countryCode,
-    },
-  },
-});
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              whatsapp_number: number,
+              country_code: countryCode,
+            },
+          },
+        });
 
-if (error) throw error;
+        if (error) throw error;
 
-// Log signup to admin_notifications table
-if (data.user) {
-  await supabase.from('admin_notifications').insert({
-    user_id: data.user.id,
-    user_email: email,
-    user_name: fullName,
-    event_type: 'signup'
-  });
-}
+        // Log signup to admin_notifications table
+        if (data.user) {
+          await supabase.from('admin_notifications').insert({
+            user_id: data.user.id,
+            user_email: email,
+            user_name: fullName,
+            event_type: 'signup'
+          });
+        }
 
-sessionStorage.setItem('just-logged-in', 'true');
-window.dispatchEvent(new Event('user-logged-in'));
+        sessionStorage.setItem('just-logged-in', 'true');
+        window.dispatchEvent(new Event('user-logged-in'));
         toast({
           title: "Account created!",
           description: "You have been automatically logged in.",
